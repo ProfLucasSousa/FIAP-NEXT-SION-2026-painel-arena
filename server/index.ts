@@ -1,7 +1,16 @@
 import { createServer } from 'node:http'
 import { Server } from 'socket.io'
 
-const httpServer = createServer()
+const httpServer = createServer((request, response) => {
+  if (request.url === '/health') {
+    response.writeHead(200, { 'Content-Type': 'application/json' })
+    response.end(JSON.stringify({ status: 'ok', service: 'symbios-socket' }))
+    return
+  }
+
+  response.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' })
+  response.end('Symbios Socket.IO ativo. Abra a aplicação em http://localhost:5173.')
+})
 const io = new Server(httpServer, { cors: { origin: '*' } })
 let latestArenaState: unknown
 
@@ -18,4 +27,7 @@ io.on('connection', (socket) => {
   })
 })
 
-httpServer.listen(3001, '0.0.0.0', () => console.log('Symbios Socket server: http://0.0.0.0:3001'))
+httpServer.listen(3001, '0.0.0.0', () => {
+  console.log('Symbios Socket.IO ativo em http://localhost:3001')
+  console.log('Aplicação local: http://localhost:5173')
+})
