@@ -16,3 +16,9 @@ export interface Team {
 }
 export interface Arena { teams: Record<TeamId, Team>; arenaTimer: Timer }
 export type ArenaSnapshot = Arena
+
+export interface CrystalActivationEvent {
+  activationId: string
+  teamId: TeamId
+  emittedAt: number
+}

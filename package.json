@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "tsx server/dev.ts",
+    "dev:web": "vite",
     "server": "tsx server/index.ts",
     "start": "tsx server/index.ts",
     "build": "tsc -b && vite build",
@@ -14,6 +15,7 @@
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
     "@react-three/postprocessing": "^3.0.5",
+    "gsap": "^3.15.0",
     "postprocessing": "^6.39.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

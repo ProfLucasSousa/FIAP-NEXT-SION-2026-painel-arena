@@ -33,13 +33,7 @@ Instale as dependências uma única vez:
 npm.cmd install
 ```
 
-Em um terminal, inicie o servidor Socket.IO:
-
-```powershell
-npm.cmd run server
-```
-
-Em outro terminal, inicie o front-end:
+Inicie o ambiente local completo. Esse comando sobe o Socket.IO e o front-end juntos:
 
 ```powershell
 npm.cmd run dev
@@ -66,10 +60,13 @@ http://192.168.x.x:5173/display
 
 O Admin é a fonte das alterações manuais. Cada alteração é enviada pelo Socket.IO para os displays conectados; o estado também é persistido no `localStorage` do computador controlador.
 
+Em duas abas no mesmo computador, um canal local do navegador mantém Admin e Display sincronizados como contingência. Em computadores diferentes, a sincronização continua sendo feita pelo Socket.IO.
+
 ## Comandos disponíveis
 
 ```powershell
-npm.cmd run dev       # inicia o Vite
+npm.cmd run dev       # inicia Socket.IO e Vite juntos
+npm.cmd run dev:web   # inicia somente o Vite (uso avançado)
 npm.cmd run server    # inicia o Socket.IO na porta 3001
 npm.cmd run build     # verifica TypeScript e gera o build de produção
 npm.cmd run preview   # serve o build gerado
@@ -91,4 +88,4 @@ server/         Servidor Socket.IO local
 
 ## Cristal 3D
 
-O componente `Crystal` recebe `color` e `progress` entre `0` e `1`. Sua geometria facetada é construída com `THREE.BufferGeometry`; o progresso controla emissão, transparência, luz interna e intensidade de Bloom. A integração ao painel principal será feita em uma etapa posterior.
+O componente `Crystal` recebe `color` e `progress` entre `0` e `1`. Sua geometria facetada é construída com `THREE.BufferGeometry`; o progresso controla emissão, transparência, luz interna e intensidade de Bloom. Os três cristais compartilham uma única cena no Display e convergem para o Núcleo Planetário durante a ativação.

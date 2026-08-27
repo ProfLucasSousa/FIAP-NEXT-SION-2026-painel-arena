@@ -1,35 +1,49 @@
-import { useArenaSync } from '../hooks/useArenaSync'
-import { useArenaStore } from '../store/arenaStore'
-import { formatTime } from '../lib/time'
+import { DisplayRanking } from '../components/DisplayRanking'
 import { DisplayTeamCard } from '../components/DisplayTeamCard'
-import { PlanetaryCore } from '../components/PlanetaryCore'
+import { useArenaSync } from '../hooks/useArenaSync'
+import { formatTime } from '../lib/time'
+import { ArenaCrystalScene } from '../scenes/ArenaCrystalScene'
+import { useArenaStore } from '../store/arenaStore'
+import { TEAM_IDS, type CrystalActivationEvent, type TeamId } from '../types/arena'
 
 export function DisplayPage() {
   const { teams, arenaTimer } = useArenaStore()
-  useArenaSync('display')
-  const sorted = Object.values(teams).sort((a, b) => b.score - a.score)
+  const [activationEvents, setActivationEvents] = useState<Partial<Record<TeamId, CrystalActivationEvent>>>({})
+  const [latestActivationEvent, setLatestActivationEvent] = useState<CrystalActivationEvent>()
+  const handleCrystalActivation = useCallback((event: CrystalActivationEvent) => {
+    setActivationEvents((current) => ({ ...current, [event.teamId]: event }))
+    setLatestActivationEvent(event)
+  }, [])
+  useArenaSync('display', handleCrystalActivation)
+
+  const sortedTeams = Object.values(teams).sort((a, b) => b.score - a.score)
+  const rankByTeam = new Map<TeamId, number>(sortedTeams.map((team, index) => [team.id, index + 1]))
   const activeCrystals = Object.values(teams).filter((team) => team.crystalActivated).length
 
-  return <main className="display-shell">
-    <div className="display-noise" />
-    <header className="display-header">
-      <div className="brand" aria-label="Symbios"><span className="brand-mark">S</span>SYMBIOS</div>
-      <div className="display-title"><span>COMPETIÇÃO PRESENCIAL</span><strong>SYMBIOS ARENA</strong></div>
-      <div className="arena-time"><span>TEMPO GERAL DA ARENA</span><strong>{formatTime(arenaTimer.elapsedMs)}</strong></div>
-      <div className="partners"><b>FIAP</b><i /><b>PALO ALTO</b></div>
+  return <main className="arena-display">
+    <div className="arena-display__grid" />
+    <header className="arena-display__header">
+      <div className="arena-brand" aria-label="Symbios"><span>S</span><div><strong>SYMBIOS</strong><small>A ÚLTIMA ALIANÇA</small></div></div>
+      <div className="arena-display__title"><span>COMPETIÇÃO PRESENCIAL</span><strong>ARENA // SETOR 01</strong></div>
+      <div className="arena-global-time"><span>TEMPO GERAL</span><strong>{formatTime(arenaTimer.elapsedMs)}</strong></div>
+      <div className="arena-partners"><b>FIAP</b><i /><b>PALO ALTO</b></div>
     </header>
-    <div className="display-content">
-      <section className="ranking panel-frame">
-        <header className="panel-heading"><span className="heading-icon">⌁</span><div><small>STATUS DA COMPETIÇÃO</small><h1>RANKING AO VIVO</h1></div><span className="live-indicator">AO VIVO</span></header>
-        <div className="team-list">{sorted.map((team, index) => <DisplayTeamCard team={team} rank={index + 1} key={team.id} />)}</div>
-        <footer className="ranking-footer"><span>03 EQUIPES CONECTADAS</span><span>ATUALIZAÇÃO EM TEMPO REAL</span></footer>
-      </section>
-      <section className="core-area">
-        <div className="core-heading"><span>PROTOCOLO DE CONVERGÊNCIA</span><i /><span>SETOR 01</span></div>
-        <PlanetaryCore />
-        <div className="core-status"><span>CRISTAIS ATIVOS</span><strong>{String(activeCrystals).padStart(2, '0')}<small>/03</small></strong><p>Sincronize os três fluxos de energia<br />para restaurar o núcleo.</p></div>
-      </section>
-    </div>
-    <footer className="display-footer"><span>SYMBIOS // A ÚLTIMA ALIANÇA</span><span>CANAL DE CONTROLE: ONLINE</span></footer>
+
+    <section className="arena-stage">
+      <ArenaCrystalScene teams={teams} activationEvents={activationEvents} latestActivationEvent={latestActivationEvent} />
+      <div className="arena-stage__frame" />
+
+      <div className="core-telemetry">
+        <span>PROTOCOLO DE CONVERGÊNCIA</span>
+        <strong>NÚCLEO PLANETÁRIO</strong>
+        <small>{String(activeCrystals).padStart(2, '0')} / 03 CRISTAIS ATIVOS</small>
+      </div>
+
+      {TEAM_IDS.map((teamId) => <DisplayTeamCard team={teams[teamId]} rank={rankByTeam.get(teamId) ?? 0} key={teamId} />)}
+      <DisplayRanking teams={sortedTeams} />
+    </section>
+
+    <footer className="arena-display__footer"><span>03 EQUIPES CONECTADAS</span><span>FLUXO: EQUIPES → CRISTAIS → NÚCLEO</span><span>CANAL DE CONTROLE // ONLINE</span></footer>
   </main>
 }
+import { useCallback, useState } from 'react'

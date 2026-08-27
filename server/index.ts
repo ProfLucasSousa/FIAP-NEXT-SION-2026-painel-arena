@@ -1,5 +1,6 @@
 import { createServer } from 'node:http'
 import { Server } from 'socket.io'
+import type { CrystalActivationEvent } from '../src/types/arena'
 
 const httpServer = createServer((request, response) => {
   if (request.url === '/health') {
@@ -21,6 +22,10 @@ io.on('connection', (socket) => {
     if (role !== 'admin') return
     latestArenaState = state
     socket.broadcast.emit('arena:state', state)
+  })
+  socket.on('crystal:activate', (event: CrystalActivationEvent) => {
+    if (role !== 'admin') return
+    socket.broadcast.emit('crystal:activate', event)
   })
   socket.on('arena:request-state', () => {
     if (latestArenaState) socket.emit('arena:state', latestArenaState)

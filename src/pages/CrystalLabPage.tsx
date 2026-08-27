@@ -1,22 +1,28 @@
 import { useState } from 'react'
 import { CrystalPreviewScene } from '../scenes/CrystalPreviewScene'
+import { MISSIONS } from '../types/arena'
 
-const crystalColors = [
-  { name: 'Titã Vermelho', value: '#ff3b4f' },
-  { name: 'Titã Azul', value: '#21a8ff' },
-  { name: 'Titã Verde', value: '#9bdf4c' },
+const stages = [
+  { progress: 0, detail: 'ENERGIA CONCENTRADA NA BASE' },
+  { progress: 0.33, detail: 'CARGA EM EXPANSÃO' },
+  { progress: 0.66, detail: 'QUASE TOTALMENTE CARREGADO' },
+  { progress: 1, detail: 'ENERGIA MÁXIMA' },
 ]
 
 export function CrystalLabPage() {
-  const [color, setColor] = useState(crystalColors[1].value)
-  const [progress, setProgress] = useState(0.45)
+  const [stageIndex, setStageIndex] = useState(0)
+  const stage = stages[stageIndex]
 
   return <main className="crystal-lab">
-    <header className="crystal-lab-header"><span>SYMBIOS // LABORATÓRIO VISUAL</span><h1>CRISTAL DE ENERGIA</h1><p>Geometria procedural · material translúcido · Bloom</p></header>
-    <section className="crystal-stage"><CrystalPreviewScene color={color} progress={progress} /><div className="stage-corners" /></section>
+    <header className="crystal-lab-header"><span>SYMBIOS // LABORATÓRIO VISUAL</span><h1>EVOLUÇÃO DOS CRISTAIS</h1><p>Um componente · três assinaturas de energia · quatro estágios</p></header>
+    <section className="crystal-stage">
+      <CrystalPreviewScene progress={stage.progress} />
+      <div className="crystal-team-labels" aria-hidden="true"><span>VERMELHO</span><span>AZUL</span><span>VERDE</span></div>
+      <div className="stage-corners" />
+    </section>
     <section className="crystal-controls">
-      <div><span>COR DO CRISTAL</span><div className="color-options">{crystalColors.map((option) => <button className={option.value === color ? 'is-selected' : ''} key={option.value} onClick={() => setColor(option.value)} style={{ '--swatch': option.value } as React.CSSProperties}>{option.name}</button>)}</div></div>
-      <label><span>NÍVEL DE ENERGIA</span><output>{Math.round(progress * 100)}%</output><input type="range" min="0" max="1" step="0.01" value={progress} onChange={(event) => setProgress(Number(event.target.value))} /></label>
+      <div className="mission-selector"><span>ESTÁGIO DA MISSÃO</span><div className="stage-options">{MISSIONS.map((mission, index) => <button className={index === stageIndex ? 'is-selected' : ''} key={mission} onClick={() => setStageIndex(index)}><small>0{index + 1}</small>{mission}</button>)}</div></div>
+      <div className="stage-readout"><span>NÍVEL VISUAL</span><output>{Math.round(stage.progress * 100)}%</output><strong>{stage.detail}</strong></div>
     </section>
   </main>
 }
