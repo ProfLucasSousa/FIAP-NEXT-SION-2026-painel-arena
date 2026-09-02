@@ -49,13 +49,16 @@ function ArenaContents({ teams, activationEvents }: Omit<ArenaCrystalSceneProps,
     blue: teams.blue.crystalActivated,
     green: teams.green.crystalActivated,
   }))
-  const compact = size.width / size.height < 1.55
-  const sideX = compact ? 2.35 : 3.55
-  const crystalSize = compact ? 0.67 : 0.76
+  const compact = size.width / size.height < 1.02
+  const shortStage = size.height < 650
+  const sideX = compact ? 2.02 : 2.38
+  const topY = shortStage ? 1.62 : 1.82
+  const bottomY = shortStage ? -1.68 : -1.88
+  const crystalSize = compact ? 0.72 : shortStage ? 0.76 : 0.82
   const crystalPositions: Record<TeamId, [number, number, number]> = {
-    red: [-sideX, 1.15, 0],
-    blue: [sideX, 1.15, 0],
-    green: [0, -2.15, 0],
+    red: [0, topY, 0],
+    blue: [-sideX, bottomY, 0],
+    green: [sideX, bottomY, 0],
   }
 
   useEffect(() => {
@@ -110,7 +113,7 @@ function ArenaContents({ teams, activationEvents }: Omit<ArenaCrystalSceneProps,
 
 export function ArenaCrystalScene({ teams, activationEvents, latestActivationEvent }: ArenaCrystalSceneProps) {
   return <div className="arena-crystal-scene" aria-label="Três cristais de equipe ao redor do Núcleo Planetário">
-    <Canvas camera={{ position: [0, 0.05, 11], fov: 38 }} dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'high-performance' }}>
+    <Canvas camera={{ position: [0, 0.05, 11], fov: 38 }} dpr={[1, 1.4]} gl={{ antialias: true, powerPreference: 'high-performance' }}>
       <color attach="background" args={['#02070c']} />
       <fog attach="fog" args={['#02070c', 9, 17]} />
       <ArenaContents teams={teams} activationEvents={activationEvents} />

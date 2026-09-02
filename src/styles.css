@@ -20,3 +20,474 @@
 .arena-display__footer{position:relative;z-index:10;display:flex;justify-content:space-between;align-items:center;min-height:30px;margin:0 clamp(1.7rem,3vw,4rem);border-top:1px solid rgba(61,154,174,.28);color:#4f8490;font-family:monospace;font-size:.47rem;letter-spacing:.12em}
 @media(max-width:1200px){.arena-display__header{margin:0 1.5rem}.arena-display__title{display:none}.arena-global-time{margin-right:8.5rem}.team-telemetry{width:220px;padding:.65rem .75rem}.team-telemetry--red,.team-telemetry--blue{top:7%}.team-telemetry__title{margin:.35rem 0}.team-telemetry__mission{padding-top:.4rem}.team-telemetry--green{left:calc(50% + 70px);bottom:3%}.arena-ranking{width:230px;bottom:3%}.arena-display__footer{margin:0 1.5rem}}
 @media(max-height:760px){.arena-display{min-height:620px}.arena-display__header{min-height:66px}.team-telemetry--red,.team-telemetry--blue{top:4%}.core-telemetry{top:2%}.team-telemetry--green,.arena-ranking{bottom:2%}.team-telemetry__mission strong{font-size:.68rem}.team-stage-pips{margin-top:.45rem}}
+
+/* Display final: escala de telão, área segura e integração entre HUD e cena 3D. */
+.arena-display {
+  --display-safe-x: clamp(24px, 2.7vw, 58px);
+  --display-safe-y: clamp(12px, 1.6vh, 24px);
+  --display-cyan: #53e8ff;
+  --display-line: rgba(76, 200, 224, .32);
+  grid-template-rows: clamp(76px, 8.8vh, 96px) minmax(0, 1fr) clamp(28px, 3.2vh, 36px);
+  min-height: 600px;
+  background:
+    radial-gradient(ellipse 46% 58% at 50% 48%, rgba(8, 91, 117, .29), transparent 65%),
+    radial-gradient(ellipse 34% 48% at 8% 25%, rgba(11, 55, 76, .18), transparent 75%),
+    radial-gradient(ellipse 34% 48% at 92% 28%, rgba(11, 55, 76, .18), transparent 75%),
+    linear-gradient(180deg, #030a11 0%, #02070c 52%, #010408 100%);
+  font-family: "Bahnschrift Condensed", "Arial Narrow", Arial, sans-serif;
+}
+
+.arena-display::before {
+  inset: var(--display-safe-y) var(--display-safe-x);
+  border-color: rgba(74, 202, 226, .27);
+  box-shadow: inset 0 0 56px rgba(11, 80, 103, .06);
+}
+
+.arena-display::after {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, .34), transparent 9%, transparent 91%, rgba(0, 0, 0, .34)),
+    repeating-linear-gradient(0deg, transparent 0 4px, rgba(48, 197, 225, .014) 5px);
+}
+
+.arena-display__grid {
+  inset: var(--display-safe-y) var(--display-safe-x);
+  background:
+    radial-gradient(circle at 50% 48%, rgba(22, 135, 161, .2), transparent 30%),
+    linear-gradient(90deg, transparent 0, rgba(70, 210, 235, .037) 1px, transparent 1px),
+    linear-gradient(0deg, transparent 0, rgba(70, 210, 235, .03) 1px, transparent 1px);
+  background-size: auto, clamp(64px, 4.2vw, 108px) clamp(64px, 4.2vw, 108px), clamp(64px, 4.2vw, 108px) clamp(64px, 4.2vw, 108px);
+  mask-image: radial-gradient(ellipse 82% 82% at center, #000 18%, rgba(0, 0, 0, .72) 62%, transparent 100%);
+}
+
+.arena-display__header {
+  grid-template-columns: minmax(260px, 1fr) auto minmax(330px, 1fr);
+  min-height: 0;
+  margin: 0 var(--display-safe-x);
+  padding: var(--display-safe-y) 0 clamp(10px, 1.2vh, 16px);
+  border-color: var(--display-line);
+}
+
+.arena-display__header::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  width: clamp(110px, 12vw, 220px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--display-cyan));
+  box-shadow: 0 0 9px rgba(83, 232, 255, .5);
+}
+
+.arena-brand {
+  min-width: 0;
+  gap: clamp(12px, 1.1vw, 22px);
+}
+
+.arena-brand > img {
+  display: block;
+  width: clamp(150px, 11.2vw, 218px);
+  height: auto;
+  object-fit: contain;
+}
+
+.arena-brand > div {
+  display: flex;
+  flex-direction: column;
+  padding-left: clamp(10px, .8vw, 16px);
+  border-left: 1px solid rgba(89, 188, 207, .32);
+}
+
+.arena-brand span,
+.arena-display__title span,
+.arena-global-time span,
+.arena-partners > span {
+  color: #6f9da8;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: clamp(8px, .48vw, 10px);
+  font-weight: 700;
+  letter-spacing: .2em;
+  white-space: nowrap;
+}
+
+.arena-brand strong {
+  margin-top: 4px;
+  color: #cfedf2;
+  font-size: clamp(10px, .65vw, 13px);
+  letter-spacing: .16em;
+}
+
+.arena-display__title {
+  min-width: 260px;
+}
+
+.arena-display__title strong {
+  margin-top: 5px;
+  color: #effdff;
+  font-size: clamp(12px, .78vw, 16px);
+  letter-spacing: .28em;
+  text-shadow: 0 0 18px rgba(96, 227, 249, .2);
+}
+
+.arena-global-time {
+  justify-self: end;
+  min-width: clamp(150px, 10vw, 200px);
+  margin-right: clamp(176px, 13vw, 256px);
+  text-align: center;
+}
+
+.arena-global-time time {
+  display: block;
+  min-width: 8ch;
+  margin-top: 4px;
+  color: #e4fcff;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: clamp(28px, 2vw, 40px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -.045em;
+  line-height: .92;
+  text-shadow: 0 0 11px rgba(63, 223, 248, .62), 0 0 30px rgba(31, 145, 171, .35);
+}
+
+.arena-partners {
+  right: 0;
+  gap: clamp(8px, .7vw, 14px);
+  height: 44px;
+}
+
+.arena-partners img {
+  display: block;
+  width: auto;
+  object-fit: contain;
+  opacity: .82;
+}
+
+.arena-partners__fiap { height: clamp(26px, 2vw, 36px); }
+.arena-partners__palo-alto { height: clamp(22px, 1.55vw, 30px); }
+.arena-partners i { height: 28px; margin: 0 1px; border-color: rgba(93, 155, 169, .35); }
+
+.arena-stage {
+  margin: 0 var(--display-safe-x);
+  overflow: hidden;
+}
+
+.arena-stage::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 50% 66% at center, transparent 48%, rgba(0, 3, 7, .26) 100%),
+    linear-gradient(90deg, rgba(2, 7, 12, .26), transparent 18%, transparent 82%, rgba(2, 7, 12, .26));
+}
+
+.arena-crystal-scene {
+  inset: clamp(2px, .35vw, 8px);
+}
+
+.arena-stage__frame {
+  inset: clamp(7px, .65vw, 14px);
+  border-color: rgba(55, 169, 193, .19);
+}
+
+.arena-stage__frame::before,
+.arena-stage__frame::after {
+  width: 13%;
+  opacity: .65;
+}
+
+.arena-stage__axis {
+  position: absolute;
+  z-index: 3;
+  inset: 7% 13%;
+  pointer-events: none;
+  opacity: .23;
+  background:
+    linear-gradient(90deg, transparent, rgba(61, 205, 231, .34) 43%, transparent 43.1%, transparent 56.9%, rgba(61, 205, 231, .34) 57%, transparent),
+    linear-gradient(0deg, transparent, rgba(61, 205, 231, .22) 47%, transparent 47.1%, transparent 52.9%, rgba(61, 205, 231, .22) 53%, transparent);
+  mask-image: radial-gradient(ellipse 63% 76% at center, #000, transparent 76%);
+}
+
+.core-telemetry {
+  top: clamp(14px, 2.5%, 26px);
+  padding: 7px 18px 6px;
+  background: radial-gradient(ellipse at center, rgba(3, 16, 23, .84), transparent 74%);
+}
+
+.core-telemetry::before {
+  content: "";
+  position: absolute;
+  inset: 0 -26px;
+  border-top: 1px solid rgba(66, 189, 212, .16);
+  clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
+}
+
+.core-telemetry span,
+.core-telemetry small {
+  font-size: clamp(8px, .46vw, 10px);
+  letter-spacing: .18em;
+}
+
+.core-telemetry strong {
+  margin: 5px 0 4px;
+  font-size: clamp(14px, .92vw, 18px);
+  letter-spacing: .2em;
+}
+
+.core-telemetry small b {
+  color: #e5fcff;
+  font-size: 1.2em;
+}
+
+.team-telemetry {
+  width: clamp(278px, 18vw, 360px);
+  min-height: clamp(142px, 15vh, 170px);
+  padding: clamp(12px, 1.15vh, 16px) clamp(14px, 1vw, 20px) clamp(11px, 1vh, 15px);
+  border-top-color: color-mix(in srgb, var(--team), #4ea4b6 52%);
+  border-bottom-color: rgba(74, 160, 178, .3);
+  background: linear-gradient(108deg, rgba(2, 10, 16, .94), rgba(5, 23, 32, .79) 76%, rgba(5, 23, 32, .12));
+  box-shadow: inset 24px 0 55px color-mix(in srgb, var(--team), transparent 94%), 0 14px 30px rgba(0, 0, 0, .22);
+  backdrop-filter: blur(3px);
+}
+
+.team-telemetry::before {
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+}
+
+.team-telemetry::after {
+  width: clamp(54px, 6vw, 116px);
+  opacity: .46;
+}
+
+.team-telemetry--red { top: clamp(30px, 5%, 52px); left: clamp(18px, 2%, 38px); }
+.team-telemetry--blue { top: clamp(30px, 5%, 52px); right: clamp(18px, 2%, 38px); }
+.team-telemetry--green { right: clamp(18px, 8%, 158px); bottom: clamp(20px, 3.4%, 38px); left: auto; }
+
+.team-telemetry[data-activated="true"] {
+  border-top-color: var(--team);
+  box-shadow: inset 24px 0 55px color-mix(in srgb, var(--team), transparent 91%), 0 0 24px color-mix(in srgb, var(--team), transparent 87%);
+}
+
+.team-telemetry header {
+  font-size: clamp(8px, .47vw, 10px);
+  letter-spacing: .15em;
+}
+
+.team-signal i {
+  width: 6px;
+  height: 6px;
+}
+
+.team-telemetry__title {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: clamp(12px, 1vw, 20px);
+  margin: clamp(7px, .9vh, 11px) 0 clamp(8px, .95vh, 12px);
+}
+
+.team-telemetry__title h2 {
+  overflow: hidden;
+  font-size: clamp(16px, 1.05vw, 21px);
+  letter-spacing: .06em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-telemetry__score {
+  min-width: 5.8ch;
+  justify-content: flex-end;
+}
+
+.team-telemetry__score strong {
+  min-width: 4ch;
+  font-size: clamp(29px, 2.05vw, 42px);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.075em;
+  text-align: right;
+}
+
+.team-telemetry__score small {
+  font-size: clamp(8px, .46vw, 10px);
+}
+
+.team-telemetry__mission {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: clamp(16px, 1.25vw, 26px);
+  padding-top: clamp(8px, .85vh, 11px);
+}
+
+.team-telemetry__mission span {
+  font-size: clamp(8px, .46vw, 10px);
+  letter-spacing: .14em;
+  white-space: nowrap;
+}
+
+.team-telemetry__mission strong {
+  margin-top: 4px;
+  color: #effdff;
+  font-size: clamp(14px, .9vw, 18px);
+  letter-spacing: .11em;
+  line-height: 1;
+}
+
+.team-telemetry__mission time {
+  min-width: 5ch;
+  color: #e2faff;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: clamp(18px, 1.22vw, 25px);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.04em;
+  line-height: 1;
+  text-align: right;
+  text-shadow: 0 0 12px color-mix(in srgb, var(--team), transparent 65%);
+}
+
+.team-telemetry__mission time span {
+  margin-bottom: 4px;
+  color: #65949e;
+  font-size: clamp(7px, .4vw, 9px);
+  letter-spacing: .12em;
+}
+
+.team-stage-pips {
+  gap: clamp(4px, .3vw, 7px);
+  margin-top: clamp(9px, 1vh, 13px);
+}
+
+.team-stage-pips i { height: 3px; }
+.team-stage-pips i.is-current { height: 5px; }
+
+.arena-ranking {
+  left: clamp(18px, 2%, 38px);
+  bottom: clamp(20px, 3.4%, 38px);
+  width: clamp(294px, 18vw, 360px);
+  padding: clamp(12px, 1.1vh, 15px) clamp(14px, 1vw, 20px);
+  background: linear-gradient(108deg, rgba(2, 10, 16, .94), rgba(5, 23, 32, .76) 78%, rgba(5, 23, 32, .1));
+  backdrop-filter: blur(3px);
+}
+
+.arena-ranking header { margin-bottom: 7px; }
+.arena-ranking header span { font-size: clamp(8px, .42vw, 9px); }
+.arena-ranking header strong { font-size: clamp(13px, .75vw, 15px); }
+.arena-ranking header > i { font-size: clamp(8px, .42vw, 9px); }
+
+.arena-ranking li {
+  grid-template-columns: 2.2rem minmax(0, 1fr) minmax(6.5ch, auto);
+  gap: clamp(7px, .55vw, 11px);
+  min-height: clamp(30px, 3.5vh, 38px);
+  padding: 5px 0;
+  transition: background-color .3s ease, border-color .3s ease;
+}
+
+.arena-ranking li[data-position="1"] {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--team), transparent 94%), transparent);
+}
+
+.ranking-position {
+  font-size: clamp(13px, .8vw, 16px);
+  font-variant-numeric: tabular-nums;
+}
+
+.ranking-team {
+  min-width: 0;
+  overflow: hidden;
+  font-size: clamp(11px, .68vw, 14px);
+  letter-spacing: .035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arena-ranking li > strong {
+  min-width: 5ch;
+  font-size: clamp(14px, .82vw, 17px);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.035em;
+  text-align: right;
+}
+
+.arena-display__footer {
+  min-height: 0;
+  margin: 0 var(--display-safe-x);
+  padding: 0 3px;
+  font-size: clamp(8px, .44vw, 9px);
+  letter-spacing: .14em;
+}
+
+.arena-display__footer span:first-child {
+  color: #69b8c6;
+}
+
+.arena-display__footer i {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: #65efd8;
+  box-shadow: 0 0 8px #65efd8;
+}
+
+@media (max-width: 1500px) {
+  .arena-display { --display-safe-x: clamp(22px, 2vw, 32px); }
+  .arena-display__header { grid-template-columns: minmax(220px, 1fr) auto minmax(286px, 1fr); }
+  .arena-brand > img { width: clamp(138px, 10.5vw, 170px); }
+  .arena-brand > div { display: none; }
+  .arena-global-time { margin-right: clamp(164px, 13vw, 194px); }
+  .arena-partners > span { display: none; }
+  .arena-partners__fiap { height: 28px; }
+  .arena-partners__palo-alto { height: 24px; }
+  .team-telemetry { width: clamp(264px, 20vw, 300px); }
+  .arena-ranking { width: clamp(278px, 21vw, 306px); }
+  .team-telemetry--green { right: clamp(22px, 5.5vw, 82px); }
+}
+
+@media (max-width: 1180px) {
+  .arena-display__title { display: none; }
+  .arena-display__header { grid-template-columns: 1fr 1fr; }
+  .arena-global-time { margin-right: 166px; }
+  .team-telemetry { width: 244px; }
+  .arena-ranking { width: 254px; }
+  .team-telemetry__title h2 { font-size: 15px; }
+  .team-telemetry__score strong { font-size: 27px; }
+  .team-telemetry__mission strong { font-size: 13px; }
+  .team-telemetry__mission time { font-size: 17px; }
+}
+
+@media (max-height: 800px) {
+  .arena-display {
+    --display-safe-y: 10px;
+    grid-template-rows: 72px minmax(0, 1fr) 28px;
+  }
+  .arena-display__header { padding-bottom: 9px; }
+  .arena-brand > img { max-height: 42px; width: auto; max-width: 164px; }
+  .arena-global-time time { font-size: 29px; }
+  .arena-partners { height: 38px; }
+  .team-telemetry {
+    min-height: 132px;
+    padding-top: 10px;
+    padding-bottom: 9px;
+  }
+  .team-telemetry--red,
+  .team-telemetry--blue { top: 22px; }
+  .team-telemetry--green,
+  .arena-ranking { bottom: 18px; }
+  .team-telemetry__title { margin: 6px 0 7px; }
+  .team-telemetry__mission { padding-top: 7px; }
+  .team-stage-pips { margin-top: 7px; }
+  .arena-ranking { padding-top: 9px; padding-bottom: 9px; }
+  .arena-ranking li { min-height: 27px; padding: 3px 0; }
+}
+
+@media (min-width: 2200px) and (min-height: 1200px) {
+  .team-telemetry--green { right: 10%; }
+  .arena-stage__frame { inset: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arena-ranking li { transition: none; }
+}
