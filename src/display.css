@@ -4,7 +4,7 @@
   --safe-y: clamp(12px, 1.45vh, 22px);
   --cyan: #55e8ff;
   --line: rgba(78, 197, 220, .3);
-  grid-template-rows: clamp(72px, 8.2vh, 90px) minmax(0, 1fr) clamp(27px, 3vh, 34px);
+  grid-template-rows: clamp(108px, 11.5vh, 126px) minmax(0, 1fr) clamp(27px, 3vh, 34px);
   min-height: 620px;
   background:
     radial-gradient(ellipse 42% 64% at 72% 48%, rgba(12, 100, 127, .27), transparent 68%),
@@ -27,23 +27,56 @@
   grid-template-columns: minmax(250px, 1fr) auto minmax(360px, 1fr);
   min-height: 0;
   margin: 0 var(--safe-x);
-  padding: var(--safe-y) 0 clamp(9px, 1vh, 13px);
+  padding: 4px 0 6px;
 }
 
-.arena-brand > img { width: clamp(145px, 10vw, 194px); }
+.arena-brand > img {
+  width: clamp(336px, 23vw, 448px);
+  max-width: none;
+  max-height: 124px;
+  transform: scale(1.42);
+  transform-origin: left center;
+}
 .arena-brand > div { display: none; }
-.arena-display__title strong { font-size: clamp(11px, .72vw, 14px); }
+.arena-display__title {
+  position: absolute;
+  left: 50%;
+  min-width: 0;
+  transform: translateX(-50%);
+}
+.arena-display__title strong { font-size: clamp(15px, 1vw, 20px); }
 
 .arena-global-time {
-  justify-self: end;
-  min-width: clamp(160px, 10vw, 194px);
-  margin-right: clamp(178px, 12vw, 230px);
+  position: absolute;
+  right: clamp(365px, 21vw, 405px);
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 1.15vw, 24px);
+  min-width: 0;
+  margin-right: 0;
+  text-align: right;
 }
 
-.arena-global-time time { font-size: clamp(27px, 1.85vw, 36px); }
+.arena-global-time span {
+  max-width: 92px;
+  line-height: 1.35;
+}
+
+.arena-global-time time {
+  margin-top: 0;
+  font-size: clamp(36px, 2.45vw, 48px);
+}
 .arena-partners > span { display: none; }
-.arena-partners__fiap { height: clamp(25px, 1.7vw, 32px); }
-.arena-partners__palo-alto { height: clamp(21px, 1.35vw, 26px); }
+.arena-partners { gap: clamp(38px, 2.5vw, 50px); }
+.arena-partners__fiap {
+  height: clamp(68px, 4.3vw, 84px);
+  transform: scale(1.42);
+}
+.arena-partners__palo-alto {
+  height: clamp(54px, 3.4vw, 66px);
+  transform: scale(1.42);
+  transform-origin: right center;
+}
 
 .arena-display__body {
   position: relative;
@@ -102,7 +135,7 @@
 .scoreboard-team__status span {
   color: #6b9ba6;
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: clamp(8px, .48vw, 10px);
+  font-size: clamp(11px, .66vw, 13px);
   font-weight: 700;
   letter-spacing: .18em;
 }
@@ -110,9 +143,14 @@
 .scoreboard__header h1 {
   margin: 5px 0 0;
   color: #eafcff;
-  font-size: clamp(20px, 1.45vw, 29px);
+  font-size: clamp(28px, 1.9vw, 38px);
   letter-spacing: .16em;
   line-height: 1;
+}
+
+.scoreboard-team__identity > span,
+.scoreboard-team__status span {
+  font-size: clamp(12px, .75vw, 15px);
 }
 
 .scoreboard__header p {
@@ -176,7 +214,7 @@
 .scoreboard-team__rank {
   color: color-mix(in srgb, var(--team), #dffaff 35%);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: clamp(27px, 2vw, 40px);
+  font-size: clamp(38px, 2.65vw, 52px);
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   line-height: .9;
@@ -187,7 +225,7 @@
   overflow: hidden;
   margin: 5px 0 0;
   color: var(--team);
-  font-size: clamp(16px, 1.15vw, 23px);
+  font-size: clamp(25px, 1.7vw, 34px);
   letter-spacing: .06em;
   line-height: 1;
   text-overflow: ellipsis;
@@ -234,7 +272,7 @@
   display: block;
   margin-top: 5px;
   color: #e8fbff;
-  font-size: clamp(14px, .9vw, 18px);
+  font-size: clamp(21px, 1.35vw, 27px);
   letter-spacing: .12em;
   line-height: 1;
   text-transform: uppercase;
@@ -244,7 +282,7 @@
   min-width: 5ch;
   color: #dff9fc;
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: clamp(19px, 1.25vw, 25px);
+  font-size: clamp(28px, 1.85vw, 36px);
   font-variant-numeric: tabular-nums;
   letter-spacing: -.04em;
   line-height: 1;
@@ -271,7 +309,7 @@
   bottom: 10px;
   color: color-mix(in srgb, var(--team), #fff 18%);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: .13em;
 }
 
@@ -280,7 +318,7 @@
   justify-content: space-between;
   padding-top: clamp(9px, 1vh, 13px);
   border-top: 1px solid rgba(73, 160, 178, .2);
-  font-size: clamp(7px, .42vw, 9px);
+  font-size: clamp(10px, .62vw, 12px);
 }
 
 .arena-visual {
@@ -350,19 +388,26 @@
 .crystal-label small {
   color: #678f99;
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: clamp(7px, .42vw, 9px);
+  font-size: clamp(8px, .5vw, 10px);
   letter-spacing: .14em;
 }
 
 .crystal-label strong {
   margin: 4px 0 3px;
   color: var(--team);
-  font-size: clamp(12px, .8vw, 16px);
+  font-size: clamp(14px, .92vw, 18px);
   letter-spacing: .1em;
   text-transform: uppercase;
 }
 
-.crystal-label--red { top: 5.5%; left: 50%; transform: translateX(-50%); }
+.crystal-label--red {
+  top: 12%;
+  left: 59%;
+  align-items: flex-start;
+  padding-left: 12px;
+  border-left: 1px solid color-mix(in srgb, var(--team), transparent 35%);
+  text-align: left;
+}
 .crystal-label--blue { bottom: 4.5%; left: 18%; }
 .crystal-label--green { right: 18%; bottom: 4.5%; }
 
@@ -388,8 +433,8 @@
 @media (max-width: 1600px) {
   .arena-display { --safe-x: clamp(22px, 1.9vw, 30px); }
   .arena-display__header { grid-template-columns: minmax(210px, 1fr) auto minmax(300px, 1fr); }
-  .arena-brand > img { width: 150px; }
-  .arena-global-time { margin-right: 176px; }
+  .arena-brand > img { width: 348px; }
+  .arena-global-time { right: 365px; }
   .arena-display__body { grid-template-columns: minmax(430px, 43fr) minmax(0, 57fr); }
   .scoreboard { margin-right: 20px; padding-left: 24px; padding-right: 24px; }
   .scoreboard-team::before { left: -24px; }
@@ -405,18 +450,18 @@
   .arena-display__body { grid-template-columns: minmax(420px, 43fr) minmax(0, 57fr); }
   .scoreboard { padding: 18px 20px 12px; }
   .scoreboard-team::before { left: -20px; }
-  .scoreboard-team__identity h2 { font-size: 16px; }
+  .scoreboard-team__identity h2 { font-size: 24px; }
   .scoreboard-team__score strong { font-size: 44px; }
   .scoreboard-team__status,
   .scoreboard-team__stages { margin-left: 54px; }
-  .scoreboard-team__status strong { font-size: 13px; }
-  .scoreboard-team__status time { font-size: 18px; }
+  .scoreboard-team__status strong { font-size: 20px; }
+  .scoreboard-team__status time { font-size: 28px; }
   .crystal-label--blue { left: 16%; }
   .crystal-label--green { right: 16%; }
 }
 
 @media (max-height: 800px) {
-  .arena-display { grid-template-rows: 70px minmax(0, 1fr) 27px; }
+  .arena-display { grid-template-rows: 104px minmax(0, 1fr) 27px; }
   .scoreboard { margin-top: 8px; margin-bottom: 8px; padding-top: 14px; }
   .scoreboard__header { padding-bottom: 10px; }
   .scoreboard-team { padding-top: 8px; padding-bottom: 7px; }

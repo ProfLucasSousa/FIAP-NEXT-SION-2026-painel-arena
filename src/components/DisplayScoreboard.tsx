@@ -19,12 +19,18 @@ export function DisplayScoreboard({ teams }: { teams: Team[] }) {
       const previousTop = previousTops.current[team.id]
       nextTops[team.id] = top
       if (previousTop === undefined || previousTop === top) return
-      tweens.push(gsap.fromTo(row, { y: previousTop - top }, { y: 0, duration: 0.42, ease: 'power2.inOut', overwrite: true }))
+      tweens.push(gsap.fromTo(row, { y: previousTop - top }, {
+        y: 0,
+        duration: 0.42,
+        ease: 'power2.inOut',
+        overwrite: true,
+        onComplete: () => gsap.set(row, { clearProps: 'transform' }),
+      }))
     })
 
     previousTops.current = nextTops
     return () => tweens.forEach((tween) => tween.kill())
-  }, [orderKey, teams])
+  }, [orderKey])
 
   return <aside className="scoreboard" aria-label="Classificação da arena">
     <header className="scoreboard__header">

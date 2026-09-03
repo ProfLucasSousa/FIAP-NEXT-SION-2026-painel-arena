@@ -52,8 +52,8 @@ function ArenaContents({ teams, activationEvents }: Omit<ArenaCrystalSceneProps,
   const compact = size.width / size.height < 1.02
   const shortStage = size.height < 650
   const sideX = compact ? 2.02 : 2.38
-  const topY = shortStage ? 1.62 : 1.82
   const bottomY = shortStage ? -1.68 : -1.88
+  const topY = Math.hypot(sideX, bottomY)
   const crystalSize = compact ? 0.72 : shortStage ? 0.76 : 0.82
   const crystalPositions: Record<TeamId, [number, number, number]> = {
     red: [0, topY, 0],
@@ -113,7 +113,7 @@ function ArenaContents({ teams, activationEvents }: Omit<ArenaCrystalSceneProps,
 
 export function ArenaCrystalScene({ teams, activationEvents, latestActivationEvent }: ArenaCrystalSceneProps) {
   return <div className="arena-crystal-scene" aria-label="Três cristais de equipe ao redor do Núcleo Planetário">
-    <Canvas camera={{ position: [0, 0.05, 11], fov: 38 }} dpr={[1, 1.4]} gl={{ antialias: true, powerPreference: 'high-performance' }}>
+    <Canvas camera={{ position: [0, 0.05, 13.2], fov: 38 }} dpr={[1, 1.4]} gl={{ antialias: true, powerPreference: 'high-performance' }}>
       <color attach="background" args={['#02070c']} />
       <fog attach="fog" args={['#02070c', 9, 17]} />
       <ArenaContents teams={teams} activationEvents={activationEvents} />
