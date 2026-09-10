@@ -6,16 +6,13 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import * as THREE from 'three'
 import { ArenaCrystalActor } from '../components/ArenaCrystalActor'
 import { PlanetaryCore, type CoreImpactEvent } from '../components/PlanetaryCore'
-import { MISSIONS, TEAM_IDS, type CrystalActivationEvent, type TeamId, type Team } from '../types/arena'
+import { getTeamCrystalProgress } from '../lib/crystalProgress'
+import { TEAM_IDS, type CrystalActivationEvent, type TeamId, type Team } from '../types/arena'
 
 interface ArenaCrystalSceneProps {
   teams: Record<TeamId, Team>
   activationEvents: Partial<Record<TeamId, CrystalActivationEvent>>
   latestActivationEvent?: CrystalActivationEvent
-}
-
-function missionProgress(missionIndex: number) {
-  return missionIndex / (MISSIONS.length - 1)
 }
 
 function ArenaBloom({ activationEvent }: { activationEvent?: CrystalActivationEvent }) {
@@ -97,7 +94,7 @@ function ArenaContents({ teams, activationEvents }: Omit<ArenaCrystalSceneProps,
       const team = teams[teamId]
       return <ArenaCrystalActor
         team={team}
-        progress={missionProgress(team.missionIndex)}
+        progress={getTeamCrystalProgress(team)}
         homePosition={crystalPositions[teamId]}
         size={crystalSize}
         activationEvent={activationEvents[teamId]}

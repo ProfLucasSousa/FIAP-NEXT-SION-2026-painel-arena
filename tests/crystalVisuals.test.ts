@@ -2,12 +2,76 @@ import assert from 'node:assert/strict'
 import { after, test } from 'node:test'
 import gsap from 'gsap'
 import * as THREE from 'three'
-import { CRYSTAL_ENERGY_LEVELS, CRYSTAL_ROTATION_SPEEDS, CRYSTAL_SOURCE_LEVELS, CRYSTAL_SOURCE_HEIGHTS, createCrystalEnergyState, getCrystalStage, transitionCrystalEnergy, updateCrystalNodes } from '../src/animations/crystalEnergy'
+import { CRYSTAL_ENERGY_LEVELS, CRYSTAL_ROTATION_SPEEDS, CRYSTAL_SOURCE_LEVELS, CRYSTAL_SOURCE_HEIGHTS, createCrystalEnergyState, getCrystalStage, isCrystalEnergySettled, transitionCrystalEnergy, updateCrystalNodes } from '../src/animations/crystalEnergy'
 import { createCrystalActivationTimeline } from '../src/animations/crystalActivation'
 import { createCrystalGeometry, createCrystalLinks } from '../src/components/crystalGeometry'
 import { applyCrystalShellEnergy, crystalFillGLSL, energyFragmentShader } from '../src/components/crystalShaders'
+import { getTeamCrystalProgress } from '../src/lib/crystalProgress'
+import { applyArenaOperation, createInitialArena } from '../src/lib/arenaOperations'
+import { TEAM_IDS } from '../src/types/arena'
 
 after(() => gsap.ticker.sleep())
+
+test('completion charges each team independently, without advancing its mission or requiring a reload', () => {
+  for (const id of TEAM_IDS) for (let mission = 0; mission < 3; mission++) {
+    let arena = createInitialArena()
+    arena.teams[id].missionIndex = mission
+    const visual = createCrystalEnergyState(getCrystalStage(getTeamCrystalProgress(arena.teams[id])))
+    arena = applyArenaOperation(arena, { type: 'complete', id }, 1000)!.arena
+    assert.equal(arena.teams[id].missionIndex, mission)
+    assert.equal(arena.teams[id].missionTimer.isRunning, false)
+    assert.equal(arena.teams[id].crystalActivated, false, 'completion must not trigger a flight')
+    const target = getCrystalStage(getTeamCrystalProgress(arena.teams[id]))
+    assert.equal(target, mission + 1)
+    const timeline = transitionCrystalEnergy(visual, target).pause().time(0.8)
+    assert.ok(visual.energy > CRYSTAL_ENERGY_LEVELS[mission])
+    assert.ok(visual.energy < CRYSTAL_ENERGY_LEVELS[target], 'charge is gradual')
+    timeline.totalProgress(1)
+    updateCrystalNodes(visual)
+    const reloaded = createCrystalEnergyState(target)
+    assert.equal(visual.energy, reloaded.energy)
+    assert.deepEqual(visual.nodes.toArray(), reloaded.nodes.toArray())
+    for (const otherId of TEAM_IDS.filter(other => other !== id)) {
+      assert.equal(getTeamCrystalProgress(arena.teams[otherId]), 0)
+    }
+    // The manual next-mission action should not discharge or recharge the crystal.
+    arena = applyArenaOperation(arena, { type: 'mission', id, index: mission + 1 }, 2000)!.arena
+    assert.equal(getCrystalStage(getTeamCrystalProgress(arena.teams[id])), target)
+    assert.equal(isCrystalEnergySettled(visual, target), true)
+    timeline.kill()
+  }
+})
+
+test('activation stays capped at full charge and manual rollback returns to the selected level', () => {
+  let arena = createInitialArena()
+  arena.teams.red.missionIndex = 3
+  assert.equal(getTeamCrystalProgress(arena.teams.red), 1)
+  arena = applyArenaOperation(arena, { type: 'activate', id: 'red' }, 1000)!.arena
+  assert.equal(getTeamCrystalProgress(arena.teams.red), 1)
+  const visual = createCrystalEnergyState(3)
+  arena = applyArenaOperation(arena, { type: 'mission', id: 'red', index: 0 }, 2000)!.arena
+  const timeline = transitionCrystalEnergy(visual, getCrystalStage(getTeamCrystalProgress(arena.teams.red))).pause()
+  timeline.totalProgress(1)
+  assert.equal(isCrystalEnergySettled(visual, 0), true)
+  timeline.kill()
+})
+
+test('effect replay resumes an interrupted target instead of mistaking it for a settled stage', () => {
+  for (const interruptAt of [0.4, 1.7]) {
+    const visual = createCrystalEnergyState(0)
+    assert.equal(isCrystalEnergySettled(visual, 0), true, 'no charge pulse on initial mount')
+    const interrupted = transitionCrystalEnergy(visual, 2).pause().time(interruptAt)
+    interrupted.kill()
+    const interruptedEnergy = visual.energy
+    assert.equal(isCrystalEnergySettled(visual, 2), false)
+    const resumed = transitionCrystalEnergy(visual, 2).pause()
+    assert.equal(visual.energy, interruptedEnergy, 'resume from current energy, without snapping')
+    resumed.totalProgress(1)
+    assert.equal(isCrystalEnergySettled(visual, 2), true)
+    assert.equal(visual.burst, 0)
+    resumed.kill()
+  }
+})
 
 test('normalized stages activate exactly 1, 2, 3 and 4 sources', () => {
   for (const [index, progress] of [0, 0.33, 0.66, 1].entries()) {
