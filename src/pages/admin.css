@@ -1,0 +1,58 @@
+.admin-shell { max-width: 1500px; padding: clamp(20px, 3vw, 44px); }
+.admin-shell button { min-height: 42px; font-size: .76rem; letter-spacing: .035em; }
+.admin-shell button:focus-visible, .admin-shell input:focus-visible, .admin-shell select:focus-visible, .admin-shell summary:focus-visible { outline: 2px solid #8beaff; outline-offset: 3px; }
+.admin-shell .admin-header { margin-bottom: 24px; }
+.admin-shell .admin-header h1 { margin: 8px 0 0; }
+.admin-shell .arena-clock { display: grid; grid-template-columns: auto auto minmax(160px, 1fr); gap: 18px 36px; padding: 24px; }
+.admin-shell .arena-clock output { font: 700 clamp(36px, 4vw, 56px) monospace; color: #e3fbff; font-variant-numeric: tabular-nums; }
+.admin-shell .arena-clock p { margin: 0; line-height: 1.6; font-size: .87rem; }
+.admin-shell .arena-clock__operation { display: grid; gap: 10px; }
+.admin-shell .admin-arena-status { color: #8bb6c2; font-size: .7rem; letter-spacing: .09em; }
+.admin-shell .admin-primary { min-height: 52px; background: #0c4355; border-color: #4ed5eb; font-size: .9rem; padding: 12px 22px; }
+.admin-shell .arena-clock > .admin-adjustments { grid-column: 1 / -1; margin-top: 0; }
+.admin-shell .arena-clock .admin-number-adjustment { max-width: 450px; }
+.admin-section-title { margin: 28px 0 14px; font-size: .8rem; text-transform: uppercase; letter-spacing: .12em; color: #9bc8d6; }
+.admin-shell .team-admin-grid { align-items: start; gap: 18px; }
+.admin-shell .team-admin-card { min-width: 0; border-top: 3px solid var(--team); padding: 22px; box-shadow: none; }
+.admin-shell .team-admin-card header { display: grid; grid-template-columns: auto 1fr; gap: 7px 9px; }
+.admin-shell .team-admin-card h2 { margin: 0; font-size: 1.15rem; }
+.admin-team-status { grid-column: 2; justify-self: start; padding: 4px 7px; background: #10242e; color: #b9d5dc; font-size: .65rem; letter-spacing: .055em; }
+.admin-team-status[data-running="true"] { color: #9ef8d4; background: #0c312d; }
+.admin-shell .field-label { margin: 22px 0 7px; font-size: .67rem; color: #8bb6c2; }
+.admin-score strong { display: block; font-size: clamp(32px, 3vw, 44px); line-height: 1.2; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.admin-score small { color: #7fa7b6; font-size: .7rem; }
+.admin-score-buttons { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 14px; }
+.admin-score-buttons button { padding: 8px 3px; }
+.admin-score-buttons button:nth-child(n+3) { border-color: #3f8090; background: #10323e; }
+.admin-mission { border-top: 1px solid #213b46; margin-top: 24px; }
+.admin-mission h3 { font-size: 1.1rem; margin: 0; }
+.admin-shell .timer-controls { justify-content: space-between; gap: 12px; }
+.admin-shell .timer-controls output { font-size: 2.35rem; color: #dcf7fc; font-variant-numeric: tabular-nums; }
+.admin-shell .timer-controls button { min-width: 112px; }
+.admin-team-hint { min-height: 3.8em; margin: 12px 0 0; color: #8daebb; font-size: .77rem; line-height: 1.5; }
+.admin-shell .action-row { margin-top: 12px; }
+.admin-shell .action-row button { min-height: 50px; }
+.admin-shell .action-row .accent { background: color-mix(in srgb, var(--team), #071018 91%); }
+.admin-shell .admin-adjustments { border-top: 1px solid #243f4b; margin-top: 22px; padding-top: 12px; }
+.admin-adjustments summary { cursor: pointer; color: #9fbdc8; font-size: .78rem; padding: 6px 0; }
+.admin-adjustments p { color: #86a6b4; font-size: .75rem; line-height: 1.5; }
+.admin-adjustments label { font-size: .8rem; line-height: 1.6; }
+.admin-adjustments > button { margin: 12px 6px 0 0; }
+.admin-number-adjustment { margin: 12px 0; }
+.admin-number-adjustment > div { display: flex; gap: 8px; }
+.admin-number-adjustment input { min-width: 0; }
+.admin-history { margin-top: 28px; border: 1px solid #23404c; background: #071018; padding: 22px; }
+.admin-history header { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.admin-history h2 { margin: 0; font-size: 1rem; }
+.admin-history p { color: #8daebb; font-size: .78rem; line-height: 1.5; }
+.admin-history ol { padding: 0; margin: 18px 0 0; list-style: none; max-height: 260px; overflow: auto; }
+.admin-history li { display: grid; grid-template-columns: 80px 1fr auto; align-items: baseline; gap: 12px; border-top: 1px solid #18323e; padding: 12px 0; font-size: .83rem; }
+.admin-history time { font-family: monospace; color: #78bccd; }
+.admin-history small { color: #8daebb; font-size: .65rem; }
+.admin-confirmation { width: min(520px, calc(100vw - 40px)); background: #0b1924; color: #e9faff; border: 1px solid #4c7586; padding: 28px; box-shadow: 0 24px 90px #0008; }
+.admin-confirmation::backdrop { background: #000b; }
+.admin-confirmation h2 { font-size: 1.3rem; margin-top: 0; }
+.admin-confirmation p, .admin-confirmation li { color: #bad0d8; font-size: .9rem; line-height: 1.6; }
+.admin-confirmation__actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+@media (max-width: 1050px) { .admin-shell .team-admin-grid { grid-template-columns: 1fr; } .admin-shell .arena-clock { grid-template-columns: 1fr 1fr; } .admin-shell .arena-clock > p { grid-column: 1 / -1; } .admin-team-hint { min-height: 0; } }
+@media (max-width: 600px) { .admin-shell .admin-header { align-items: start; flex-direction: column; } .admin-shell .arena-clock { grid-template-columns: 1fr; } .admin-history header { align-items: start; flex-direction: column; gap: 8px; } .admin-history li { grid-template-columns: 70px 1fr; } .admin-history small { grid-column: 2; } .admin-confirmation__actions { flex-wrap: wrap; } }
