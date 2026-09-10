@@ -3,6 +3,7 @@ import type { ArenaSnapshot, CrystalActivationEvent } from '../types/arena'
 type ArenaLocalMessage =
   | { type: 'arena:state'; payload: ArenaSnapshot }
   | { type: 'crystal:activate'; payload: CrystalActivationEvent }
+  | { type: 'arena:request-state' }
 
 const channel = typeof BroadcastChannel === 'undefined' ? undefined : new BroadcastChannel('symbios-arena-sync')
 
@@ -16,3 +17,5 @@ export function subscribeLocalArenaMessages(listener: (message: ArenaLocalMessag
   channel.addEventListener('message', receiveMessage)
   return () => channel.removeEventListener('message', receiveMessage)
 }
+
+if (import.meta.hot) import.meta.hot.dispose(() => channel?.close())
