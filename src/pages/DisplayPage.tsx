@@ -30,7 +30,6 @@ export function DisplayPage() {
         <img src={symbiosLogo} alt="Symbios" />
         <div><span>PROTOCOLO DE ARENA</span><strong>SETOR // 01</strong></div>
       </div>
-      <div className="arena-display__title"><span>COMPETIÇÃO PRESENCIAL</span><strong>CONVERGÊNCIA TITÃ</strong></div>
       <div className="arena-global-time">
         <span>TEMPO DA ARENA</span>
         <time dateTime={`PT${Math.floor(arenaTimer.elapsedMs / 1000)}S`}>{formatArenaTime(arenaTimer.elapsedMs)}</time>

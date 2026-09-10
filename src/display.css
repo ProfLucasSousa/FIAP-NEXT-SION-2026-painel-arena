@@ -38,17 +38,13 @@
   transform-origin: left center;
 }
 .arena-brand > div { display: none; }
-.arena-display__title {
-  position: absolute;
-  left: 50%;
-  min-width: 0;
-  transform: translateX(-50%);
-}
-.arena-display__title strong { font-size: clamp(15px, 1vw, 20px); }
-
 .arena-global-time {
   position: absolute;
-  right: clamp(365px, 21vw, 405px);
+  top: 50%;
+  left: 50%;
+  right: auto;
+  width: max-content;
+  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   gap: clamp(16px, 1.15vw, 24px);
@@ -434,7 +430,6 @@
   .arena-display { --safe-x: clamp(22px, 1.9vw, 30px); }
   .arena-display__header { grid-template-columns: minmax(210px, 1fr) auto minmax(300px, 1fr); }
   .arena-brand > img { width: 348px; }
-  .arena-global-time { right: 365px; }
   .arena-display__body { grid-template-columns: minmax(430px, 43fr) minmax(0, 57fr); }
   .scoreboard { margin-right: 20px; padding-left: 24px; padding-right: 24px; }
   .scoreboard-team::before { left: -24px; }
@@ -445,7 +440,6 @@
 }
 
 @media (max-width: 1380px) {
-  .arena-display__title { display: none; }
   .arena-display__header { grid-template-columns: 1fr 1fr; }
   .arena-display__body { grid-template-columns: minmax(420px, 43fr) minmax(0, 57fr); }
   .scoreboard { padding: 18px 20px 12px; }
