@@ -1,7 +1,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import { createCrystalEnergyState, getCrystalStage, transitionCrystalEnergy, updateCrystalNodes } from '../animations/crystalEnergy'
+import { createCrystalEnergyState, getCrystalStage, isCrystalEnergySettled, transitionCrystalEnergy, updateCrystalNodes } from '../animations/crystalEnergy'
 import { CrystalEnergySources } from './CrystalEnergySources'
 import { createCrystalGeometry, createCrystalLinks } from './crystalGeometry'
 import { applyCrystalShellEnergy, crystalVertexShader, edgeFragmentShader, energyFragmentShader, linkFragmentShader, particleFragmentShader, particleVertexShader, veinFragmentShader } from './crystalShaders'
@@ -28,13 +28,13 @@ export function Crystal({ color, progress, activated = false, size = 1 }: Crysta
   const shell = useRef<THREE.MeshPhysicalMaterial>(null)
   const light = useRef<THREE.PointLight>(null)
   const particles = useRef<THREE.ShaderMaterial>(null)
+  const energyMaterials = useRef<Array<THREE.ShaderMaterial | null>>([])
   const geometry = useMemo(createCrystalGeometry, [])
   const edges = useMemo(() => new THREE.EdgesGeometry(geometry, 12), [geometry])
   const links = useMemo(createCrystalLinks, [])
   const particleGeometry = useMemo(createParticles, [])
   const teamColor = useMemo(() => new THREE.Color(color), [color])
   const visual = useRef(createCrystalEnergyState(stage))
-  const previousStage = useRef(stage)
   const uniforms = useMemo(() => ({
     uColor: { value: teamColor.clone() },
     uNodes: { value: visual.current.nodes },
@@ -59,8 +59,9 @@ export function Crystal({ color, progress, activated = false, size = 1 }: Crysta
   }, [geometry, edges, links, particleGeometry])
 
   useLayoutEffect(() => {
-    if (previousStage.current === stage) return
-    previousStage.current = stage
+    // Check the actual visual state, not just the last requested stage: an
+    // effect cleanup can interrupt a tween before it reaches that stage.
+    if (isCrystalEnergySettled(visual.current, stage)) return
     const timeline = transitionCrystalEnergy(visual.current, stage)
     return () => { timeline.kill() }
   }, [stage])
@@ -92,6 +93,18 @@ export function Crystal({ color, progress, activated = false, size = 1 }: Crysta
     uniforms.uTime.value = elapsed
     uniforms.uBurst.value = burst
 
+    // R3F copies uniform wrappers when applying ShaderMaterial props. Updating
+    // the memoized input alone leaves scalar values on the GPU at mount-time
+    // values, even though the shell and shared vectors are already changing.
+    for (const material of energyMaterials.current) {
+      if (!material) continue
+      material.uniforms.uColor.value.copy(teamColor)
+      material.uniforms.uNodes.value.copy(state.nodes)
+      material.uniforms.uEnergy.value = energy
+      material.uniforms.uTime.value = elapsed
+      material.uniforms.uBurst.value = burst
+    }
+
     // Only a gentle spill light; the shader fills the entire charged region.
     if (light.current) {
       light.current.color.copy(teamColor)
@@ -120,20 +133,20 @@ export function Crystal({ color, progress, activated = false, size = 1 }: Crysta
   return <group ref={group} scale={size}>
     <pointLight ref={light} color={color} intensity={0.5} distance={2.8} decay={2} />
     <mesh geometry={geometry} scale={0.985} renderOrder={1}>
-      <shaderMaterial uniforms={uniforms} vertexShader={crystalVertexShader} fragmentShader={energyFragmentShader} transparent depthWrite={false} side={THREE.BackSide} blending={THREE.AdditiveBlending} toneMapped={false} />
+      <shaderMaterial ref={(material) => { energyMaterials.current[0] = material }} uniforms={uniforms} vertexShader={crystalVertexShader} fragmentShader={energyFragmentShader} transparent depthWrite={false} side={THREE.BackSide} blending={THREE.AdditiveBlending} toneMapped={false} />
     </mesh>
     <CrystalEnergySources color={teamColor} visual={visual} />
     <lineSegments geometry={links} renderOrder={2}>
-      <shaderMaterial uniforms={uniforms} vertexShader={crystalVertexShader} fragmentShader={linkFragmentShader} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+      <shaderMaterial ref={(material) => { energyMaterials.current[1] = material }} uniforms={uniforms} vertexShader={crystalVertexShader} fragmentShader={linkFragmentShader} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
     </lineSegments>
     <mesh geometry={geometry} scale={0.96} renderOrder={3}>
-      <shaderMaterial uniforms={uniforms} vertexShader={crystalVertexShader} fragmentShader={veinFragmentShader} transparent depthWrite={false} side={THREE.FrontSide} blending={THREE.AdditiveBlending} toneMapped={false} />
+      <shaderMaterial ref={(material) => { energyMaterials.current[2] = material }} uniforms={uniforms} vertexShader={crystalVertexShader} fragmentShader={veinFragmentShader} transparent depthWrite={false} side={THREE.FrontSide} blending={THREE.AdditiveBlending} toneMapped={false} />
     </mesh>
     <mesh geometry={geometry} renderOrder={4}>
       <meshPhysicalMaterial ref={shell} onBeforeCompile={shadeShell} color={color} roughness={0.24} metalness={0.26} transmission={0.25} thickness={0.65} ior={1.4} clearcoat={0.55} clearcoatRoughness={0.18} flatShading transparent opacity={0.38} depthWrite={false} side={THREE.FrontSide} />
     </mesh>
     <lineSegments geometry={edges} scale={1.002} renderOrder={5}>
-      <shaderMaterial uniforms={uniforms} vertexShader={crystalVertexShader} fragmentShader={edgeFragmentShader} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+      <shaderMaterial ref={(material) => { energyMaterials.current[3] = material }} uniforms={uniforms} vertexShader={crystalVertexShader} fragmentShader={edgeFragmentShader} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
     </lineSegments>
     <points geometry={particleGeometry} renderOrder={6}>
       <shaderMaterial ref={particles} uniforms={particleUniforms} vertexShader={particleVertexShader} fragmentShader={particleFragmentShader} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />

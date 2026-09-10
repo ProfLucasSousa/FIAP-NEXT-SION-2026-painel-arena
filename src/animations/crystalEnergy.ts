@@ -33,6 +33,12 @@ export function createCrystalEnergyState(stage: number): CrystalEnergyState {
   return state
 }
 
+export function isCrystalEnergySettled(state: CrystalEnergyState, stage: number) {
+  return Math.abs(state.energy - CRYSTAL_ENERGY_LEVELS[stage]) < 0.000001
+    && Math.abs(state.rotationSpeed - CRYSTAL_ROTATION_SPEEDS[stage]) < 0.000001
+    && state.burst === 0
+}
+
 export function transitionCrystalEnergy(state: CrystalEnergyState, stage: number) {
   return gsap.timeline()
     .to(state, { energy: CRYSTAL_ENERGY_LEVELS[stage], duration: 1.65, ease: 'power2.inOut' }, 0)
