@@ -6,13 +6,14 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import * as THREE from 'three'
 import { ArenaCrystalActor } from '../components/ArenaCrystalActor'
 import { PlanetaryCore, type CoreImpactEvent } from '../components/PlanetaryCore'
-import { getTeamCrystalProgress } from '../lib/crystalProgress'
+import { getCrystalProgress } from '../lib/crystalProgress'
 import { TEAM_IDS, type CrystalActivationEvent, type TeamId, type Team } from '../types/arena'
 
 interface ArenaCrystalSceneProps {
   teams: Record<TeamId, Team>
   activationEvents: Partial<Record<TeamId, CrystalActivationEvent>>
   latestActivationEvent?: CrystalActivationEvent
+  phaseIndex: number
 }
 
 function ArenaBloom({ activationEvent }: { activationEvent?: CrystalActivationEvent }) {
@@ -36,7 +37,7 @@ function ArenaBloom({ activationEvent }: { activationEvent?: CrystalActivationEv
   return <Bloom ref={bloom} intensity={1.15} luminanceThreshold={0.09} luminanceSmoothing={0.5} mipmapBlur />
 }
 
-function ArenaContents({ teams, activationEvents }: Omit<ArenaCrystalSceneProps, 'latestActivationEvent'>) {
+function ArenaContents({ teams, activationEvents, phaseIndex }: Omit<ArenaCrystalSceneProps, 'latestActivationEvent'>) {
   const { size } = useThree()
   const coreRef = useRef<THREE.Group>(null)
   const completedActivationIds = useRef<Partial<Record<TeamId, string>>>({})
@@ -84,9 +85,9 @@ function ArenaContents({ teams, activationEvents }: Omit<ArenaCrystalSceneProps,
   const activeCoreTeams = TEAM_IDS.filter((teamId) => deliveredTeams[teamId]).map((teamId) => teams[teamId])
 
   return <>
-    <ambientLight intensity={0.13} />
-    <directionalLight position={[2, 5, 5]} color="#b8f4ff" intensity={1.25} />
-    <directionalLight position={[-5, -1, 2]} color="#0b637b" intensity={0.6} />
+    <ambientLight intensity={0.22} />
+    <directionalLight position={[2, 5, 5]} color="#b8f4ff" intensity={1.55} />
+    <directionalLight position={[-5, -1, 2]} color="#1684a0" intensity={0.78} />
 
     <PlanetaryCore activeTeams={activeCoreTeams} impactEvent={impactEvent} coreRef={coreRef} />
 
@@ -94,7 +95,7 @@ function ArenaContents({ teams, activationEvents }: Omit<ArenaCrystalSceneProps,
       const team = teams[teamId]
       return <ArenaCrystalActor
         team={team}
-        progress={getTeamCrystalProgress(team)}
+        progress={getCrystalProgress(phaseIndex)}
         homePosition={crystalPositions[teamId]}
         size={crystalSize}
         activationEvent={activationEvents[teamId]}
@@ -108,12 +109,12 @@ function ArenaContents({ teams, activationEvents }: Omit<ArenaCrystalSceneProps,
   </>
 }
 
-export function ArenaCrystalScene({ teams, activationEvents, latestActivationEvent }: ArenaCrystalSceneProps) {
+export function ArenaCrystalScene({ teams, activationEvents, latestActivationEvent, phaseIndex }: ArenaCrystalSceneProps) {
   return <div className="arena-crystal-scene" aria-label="Três cristais de equipe ao redor do Núcleo Planetário">
     <Canvas camera={{ position: [0, 0.05, 13.2], fov: 38 }} dpr={[1, 1.4]} gl={{ antialias: true, powerPreference: 'high-performance' }}>
-      <color attach="background" args={['#02070c']} />
-      <fog attach="fog" args={['#02070c', 9, 17]} />
-      <ArenaContents teams={teams} activationEvents={activationEvents} />
+      <color attach="background" args={['#041019']} />
+      <fog attach="fog" args={['#041019', 9, 17]} />
+      <ArenaContents teams={teams} activationEvents={activationEvents} phaseIndex={phaseIndex} />
       <EffectComposer multisampling={0}>
         <ArenaBloom activationEvent={latestActivationEvent} />
       </EffectComposer>

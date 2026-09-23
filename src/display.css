@@ -7,9 +7,9 @@
   grid-template-rows: clamp(108px, 11.5vh, 126px) minmax(0, 1fr) clamp(27px, 3vh, 34px);
   min-height: 620px;
   background:
-    radial-gradient(ellipse 42% 64% at 72% 48%, rgba(12, 100, 127, .27), transparent 68%),
-    radial-gradient(ellipse 30% 60% at 18% 45%, rgba(9, 57, 78, .18), transparent 78%),
-    linear-gradient(180deg, #030a11, #02070c 58%, #010407);
+    radial-gradient(ellipse 42% 64% at 72% 48%, rgba(15, 122, 151, .32), transparent 68%),
+    radial-gradient(ellipse 30% 60% at 18% 45%, rgba(12, 72, 96, .24), transparent 78%),
+    linear-gradient(180deg, #06131d, #041019 58%, #020a10);
 }
 
 .arena-display::before { inset: var(--safe-y) var(--safe-x); }
@@ -38,30 +38,56 @@
   transform-origin: left center;
 }
 .arena-brand > div { display: none; }
-.arena-global-time {
+.arena-phase-time {
   position: absolute;
   top: 50%;
   left: 50%;
   right: auto;
   width: max-content;
   transform: translate(-50%, -50%);
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto;
   align-items: center;
-  gap: clamp(16px, 1.15vw, 24px);
+  column-gap: clamp(16px, 1.15vw, 24px);
   min-width: 0;
   margin-right: 0;
   text-align: right;
 }
 
-.arena-global-time span {
-  max-width: 92px;
+.arena-phase-time span {
+  grid-row: 1;
+  grid-column: 1;
+  max-width: 180px;
   line-height: 1.35;
+  color: #9acbd5;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: clamp(11px, .68vw, 14px);
+  font-weight: 700;
+  letter-spacing: .12em;
 }
 
-.arena-global-time time {
+.arena-phase-time small {
+  grid-row: 2;
+  grid-column: 1;
+  color: #5e919d;
+  font: 700 clamp(8px, .48vw, 10px) ui-monospace, "SFMono-Regular", Consolas, monospace;
+  letter-spacing: .15em;
+}
+
+.arena-phase-time time {
+  grid-row: 1 / 3;
+  grid-column: 2;
   margin-top: 0;
+  color: #e6fbff;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -.04em;
+  line-height: 1;
   font-size: clamp(36px, 2.45vw, 48px);
 }
+.arena-phase-time[data-final-window="true"] time { color: #ffd783; text-shadow: 0 0 22px rgba(255, 183, 57, .65); }
+.arena-phase-time[data-final-window="true"] small { color: #ffbc55; }
 .arena-partners > span { display: none; }
 .arena-partners { gap: clamp(38px, 2.5vw, 50px); }
 .arena-partners__fiap {
@@ -274,18 +300,21 @@
   text-transform: uppercase;
 }
 
-.scoreboard-team__status time {
+.scoreboard-team__status output {
   min-width: 5ch;
-  color: #dff9fc;
+  color: #b8eef5;
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: clamp(28px, 1.85vw, 36px);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -.04em;
+  font-size: clamp(13px, .82vw, 17px);
+  font-weight: 700;
+  letter-spacing: .06em;
   line-height: 1;
   text-align: right;
 }
 
-.scoreboard-team__status time span { display: block; margin-bottom: 5px; }
+.scoreboard-team__status output span { display: block; margin-bottom: 8px; }
+.scoreboard-team[data-status="CONCLUÍDO"] .scoreboard-team__status output,
+.scoreboard-team[data-status="CRISTAL ATIVADO"] .scoreboard-team__status output { color: color-mix(in srgb, var(--team), #fff 25%); text-shadow: 0 0 12px color-mix(in srgb, var(--team), transparent 60%); }
+.scoreboard-team[data-status="TEMPO ENCERRADO"] .scoreboard-team__status output { color: #ff978e; }
 
 .scoreboard-team__stages {
   display: grid;
@@ -449,7 +478,7 @@
   .scoreboard-team__status,
   .scoreboard-team__stages { margin-left: 54px; }
   .scoreboard-team__status strong { font-size: 20px; }
-  .scoreboard-team__status time { font-size: 28px; }
+  .scoreboard-team__status output { font-size: 13px; }
   .crystal-label--blue { left: 16%; }
   .crystal-label--green { right: 16%; }
 }

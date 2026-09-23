@@ -1,41 +1,61 @@
 # Symbios Arena
 
-Aplicação local para controlar e exibir, em tempo real, uma competição presencial entre as equipes Titã Vermelho, Titã Azul e Titã Verde.
+Aplicação local para controlar e exibir, em tempo real, a competição presencial entre as equipes Titã Vermelho, Titã Azul e Titã Verde.
 
-O sistema foi pensado para operar sem internet, em um único computador ou em diferentes máquinas conectadas à mesma rede local. O Admin concentra as ações do operador e o Display transforma o estado da arena em uma experiência visual sci-fi com cristais energéticos e um Núcleo Planetário.
+O sistema funciona sem internet, em um único computador ou em máquinas conectadas à mesma rede local. O Admin concentra as ações do operador; o Display apresenta o placar, os cristais energéticos e o Núcleo Planetário em uma interface sci-fi para telões.
 
 ## Demonstração
 
 ### Display da arena
 
-Ranking, cronômetro geral, informações das três equipes, cristais com carga progressiva e Núcleo Planetário em uma composição voltada para telões 16:9.
+Ranking, fase atual, cronômetro compartilhado, status das equipes, cristais com carga progressiva e Núcleo Planetário em uma composição 16:9.
 
 ![Demonstração do Display da Symbios Arena](references/Painel.gif)
 
 ### Centro de comando
 
-Controles operacionais para iniciar e pausar a arena, atualizar pontuações, controlar missões e cronômetros e ativar os cristais.
+Controles para operar as fases, registrar conclusões, atualizar pontuações e ativar os cristais.
 
 ![Demonstração do Admin da Symbios Arena](references/Admin.gif)
 
 ## Interfaces
 
 - `/admin`: centro de comando utilizado pelo operador.
-- `/display`: painel principal exibido no telão da arena.
+- `/display`: painel principal exibido no telão.
 - `/crystal`: laboratório isolado para avaliar cores e níveis de energia do componente `Crystal`.
 - `/health`: verificação do servidor Socket.IO, disponível na porta `3001`.
 
+## Regras implementadas
+
+As três equipes disputam a mesma fase simultaneamente. Existe somente um cronômetro regressivo, compartilhado por todas elas:
+
+| Fase | Missão | Duração |
+| ---: | --- | ---: |
+| 01 | Encontrar | `08:00` |
+| 02 | Proteger | `06:30` |
+| 03 | Levar | `06:30` |
+| 04 | Ativar | `04:30` |
+
+- Cada fase é preparada parada e precisa ser iniciada manualmente.
+- A primeira equipe que conclui define o tempo restante em exatamente `02:00`, mesmo quando isso aumenta o relógio.
+- A segunda conclusão não altera o tempo.
+- A terceira conclusão encerra a fase imediatamente.
+- Ao chegar a `00:00`, a fase termina e equipes pendentes recebem o status `TEMPO ENCERRADO`.
+- O avanço para a próxima fase é sempre manual.
+- Não existem timer geral, timers individuais ou avanço automático.
+
 ## Principais recursos
 
-- Três equipes com pontuação, missão e cronômetro independentes.
-- Cronômetro geral com início, pausa e retomada coordenados.
-- Ranking calculado automaticamente a partir das pontuações.
+- Ranking ordenado automaticamente pela pontuação.
+- Status independentes por equipe: `EM MISSÃO`, `CONCLUÍDO`, `TEMPO ENCERRADO` e `CRISTAL ATIVADO`.
+- Atalhos de pontuação positivos e negativos, soma manual e definição de total.
 - Cristais 3D gerados em código, sem modelos externos.
-- Evolução visual da energia conforme cada missão é concluída.
+- Carga visual dos cristais baseada na fase compartilhada: 25%, 50%, 75% e 100%.
 - Animação de ativação e convergência do cristal para o Núcleo Planetário.
+- Energias vermelha, azul e verde preservadas separadamente dentro do núcleo.
 - Sincronização em tempo real por Socket.IO e `BroadcastChannel`.
 - Persistência do estado operacional no `localStorage` do Admin.
-- Histórico recente de ações e desfazer para operações compatíveis.
+- Histórico recente e opção de desfazer a alteração de pontuação mais recente.
 
 ## Tecnologias
 
@@ -67,7 +87,7 @@ Inicie o servidor Socket.IO e o front-end juntos:
 npm.cmd run dev
 ```
 
-O terminal exibirá os endereços disponíveis para acesso local e pela rede. Em uma instalação padrão:
+O terminal exibe os endereços do Admin e do Display para acesso local e pela rede. Em uma instalação padrão:
 
 | Interface | Endereço local |
 | --- | --- |
@@ -78,28 +98,54 @@ O terminal exibirá os endereços disponíveis para acesso local e pela rede. Em
 
 > A porta `3001` atende ao Socket.IO e à verificação de saúde. As interfaces visuais são servidas pelo Vite na porta `5173`.
 
+Se aparecer `EADDRINUSE`, já existe outro processo utilizando a porta indicada. Encerre a instância anterior ou continue usando o processo que já está executando o projeto.
+
 ## Operação da arena
 
 1. Abra o `/admin` no computador controlador.
 2. Abra o `/display` no telão ou em outra máquina da mesma rede.
-3. Use **Iniciar arena** para iniciar o tempo geral e as três equipes na missão Encontrar.
-4. Ao concluir uma missão, o cronômetro da equipe para e seu cristal recebe o próximo nível de carga.
-5. Selecione manualmente a próxima missão e inicie seu cronômetro quando a equipe estiver pronta.
-6. Na missão Ativar, confirme a ativação para iniciar a convergência do cristal ao núcleo.
+3. Confirme que a Fase 01 — Encontrar está preparada com `08:00`.
+4. Clique em **Iniciar fase**.
+5. Use **Concluir missão** para registrar cada equipe. A primeira conclusão abre a janela final de `02:00`.
+6. Quando as três equipes concluírem ou o tempo zerar, prepare manualmente a próxima fase.
+7. Clique novamente em **Iniciar fase**; a preparação nunca inicia o cronômetro automaticamente.
+8. Na fase Ativar, confirme cada ativação para iniciar a convergência do respectivo cristal ao núcleo.
 
-O Admin é a fonte das alterações manuais. Cada ação é transmitida imediatamente aos displays conectados e as equipes continuam evoluindo de forma independente.
+O Admin é a fonte das alterações manuais. Pontuação, fase, tempo, conclusões e ativações são transmitidos imediatamente aos displays conectados.
+
+### Pontuação
+
+O Admin oferece quatro grupos de controles:
+
+- atalhos positivos: `+100`, `+200` e `+300`;
+- atalhos negativos: `-25`, `-100`, `-200` e `-300`;
+- **Adicionar pontos**, que soma o valor digitado à pontuação atual;
+- **Definir total**, que substitui a pontuação pelo valor digitado.
+
+## Persistência e sincronização
+
+O computador com o Admin persiste no `localStorage`:
+
+- fase e tempo restante;
+- estado iniciado, pausado ou encerrado;
+- disparo da janela final;
+- conclusões e ativações das equipes;
+- pontuações;
+- histórico operacional.
+
+Ao atualizar o Display, ele solicita o estado vigente ao Admin/servidor. Ativações antigas são restauradas sem repetir a animação cinematográfica.
+
+Em duas abas do mesmo navegador, `BroadcastChannel` funciona como contingência local. Entre computadores, a sincronização ocorre pelo Socket.IO.
 
 ## Uso na rede local
 
-Mantenha o comando `npm.cmd run dev` em execução no computador servidor. Nos outros computadores da mesma rede, use os endereços de rede apresentados no terminal, por exemplo:
+Mantenha `npm.cmd run dev` em execução no computador servidor. Nos outros dispositivos da mesma rede, use os endereços exibidos no terminal, por exemplo:
 
 ```text
 http://192.168.x.x:5173/display
 ```
 
-O navegador do Display também se conecta ao Socket.IO usando o mesmo IP na porta `3001`. Portanto, as duas portas precisam estar acessíveis na rede local.
-
-Em duas abas do mesmo navegador, um canal local mantém Admin e Display sincronizados como contingência. Entre computadores diferentes, a comunicação ocorre pelo Socket.IO.
+O Display conecta-se ao Socket.IO usando o mesmo IP na porta `3001`. Portanto, as portas `5173` e `3001` precisam estar acessíveis na rede local.
 
 ## Comandos disponíveis
 
@@ -109,6 +155,12 @@ npm.cmd run dev:web   # inicia somente o Vite
 npm.cmd run server    # inicia somente o Socket.IO na porta 3001
 npm.cmd run build     # verifica TypeScript e gera o build de produção
 npm.cmd run preview   # serve o build gerado
+```
+
+Para executar a suíte automatizada:
+
+```powershell
+node --import tsx --test tests/*.test.ts
 ```
 
 ## Estrutura principal
@@ -126,13 +178,16 @@ src/
 server/         Servidor Socket.IO local
 references/     Referências visuais e demonstrações em GIF
 docs/           Documentação e materiais do projeto
+tests/          Testes de regras, sincronização e componentes visuais
 ```
 
-## Cristal 3D
+## Cristais e Núcleo Planetário
 
-O componente reutilizável `Crystal` recebe cor, progresso normalizado e estado de ativação. Sua geometria facetada é construída com `THREE.BufferGeometry`, enquanto shaders, emissão, luz interna, partículas, rotação e Bloom representam o nível de energia.
+O componente reutilizável `Crystal` recebe cor, progresso normalizado e estado de ativação. Sua geometria facetada é construída com `THREE.BufferGeometry`; shaders, material translúcido, emissão, veios, fontes internas, rotação e Bloom comunicam o nível energético.
 
-Cada cristal reage apenas ao estado da própria equipe. A conclusão de uma missão aumenta a carga visual; selecionar a missão seguinte preserva a energia conquistada. Os três cristais compartilham uma única cena no Display.
+Os três cristais compartilham uma única cena. A fase atual determina o mesmo estágio de carga para todos, enquanto cor, conclusão e ativação continuam pertencendo a cada equipe.
+
+O Núcleo Planetário mantém canais separados para as energias vermelha, azul e verde. Isso permite representar nenhum, um, dois ou os três cristais armazenados sem reduzir o resultado a uma mistura uniforme de cores.
 
 ## Documentação adicional
 

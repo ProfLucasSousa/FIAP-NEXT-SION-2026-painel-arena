@@ -4,25 +4,35 @@ export type TeamId = (typeof TEAM_IDS)[number]
 export const MISSIONS = ['Encontrar', 'Proteger', 'Levar', 'Ativar'] as const
 export type Mission = (typeof MISSIONS)[number]
 
-export interface Timer { elapsedMs: number; isRunning: boolean; updatedAt?: number }
+export const PHASE_DURATION_SECONDS = [8 * 60, 6 * 60 + 30, 6 * 60 + 30, 4 * 60 + 30] as const
+export const FINAL_WINDOW_SECONDS = 2 * 60
+
+export interface PhaseTimer {
+  remainingMs: number
+  isRunning: boolean
+  updatedAt?: number
+}
+
 export interface Team {
   id: TeamId
   name: string
   color: string
   score: number
-  missionIndex: number
-  missionTimer: Timer
+  phaseCompleted: boolean
   crystalActivated: boolean
-  missionCompleted: boolean
 }
-export type ArenaStatus = 'waiting' | 'running' | 'paused'
+
+export type PhaseStatus = 'ready' | 'running' | 'paused' | 'finished'
+
 export interface Arena {
   revision: number
+  phaseIndex: number
+  phaseTimer: PhaseTimer
+  phaseStatus: PhaseStatus
+  firstCompletionTriggered: boolean
   teams: Record<TeamId, Team>
-  arenaTimer: Timer
-  arenaStatus: ArenaStatus
-  resumeTeamIds: TeamId[]
 }
+
 export type ArenaSnapshot = Arena
 
 export interface CrystalActivationEvent {

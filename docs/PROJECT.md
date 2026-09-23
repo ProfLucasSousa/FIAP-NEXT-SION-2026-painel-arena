@@ -2,110 +2,602 @@
 
 ## Visão geral
 
-O **Symbios Arena** é uma aplicação para controlar e exibir, em tempo real, uma competição presencial entre três equipes.
+O **Symbios Arena** é uma aplicação para controle e exibição de uma competição presencial entre três equipes.
 
-A experiência faz parte do universo **Symbios**, com estética sci-fi, tecnológica e pós-apocalíptica.
+A experiência pertence ao universo visual **Symbios**, com estética sci-fi, tecnológica e energética.
 
-A aplicação possui duas telas:
+A aplicação possui duas interfaces:
 
-* `/display` — painel exibido no telão da arena.
-* `/admin` — painel utilizado pelo operador para controlar a competição.
+* `/display` — painel exibido no telão da arena;
+* `/admin` — painel utilizado pelo operador.
 
-O sistema deve funcionar totalmente em **localhost ou rede local**, sem depender de internet.
+O sistema deve funcionar completamente:
+
+* em localhost;
+* ou em dois computadores conectados à mesma rede local.
+
+Não deve depender de internet, cloud ou banco de dados.
 
 ---
 
-## Equipes
+# Equipes
 
 Existem três equipes:
 
-* **Titã Vermelho**
-* **Titã Azul**
-* **Titã Verde**
+* Titã Vermelho;
+* Titã Azul;
+* Titã Verde.
 
 Cada equipe possui:
 
 * cor própria;
 * pontuação;
-* missão atual;
-* cronômetro da missão atual;
-* estado de progresso;
-* cristal de energia próprio.
+* status na fase atual;
+* cristal de energia;
+* estado de ativação final.
 
-As equipes evoluem de forma independente. Portanto, cada equipe pode estar em uma missão diferente das demais ao mesmo tempo.
+As três equipes disputam a **mesma fase ao mesmo tempo**.
+
+Não existem mais fases diferentes ocorrendo simultaneamente por equipe.
 
 ---
 
-## Progressão
+# Fases
 
-Cada equipe deve passar pelas seguintes etapas:
+A competição possui quatro fases:
 
 1. **Encontrar**
 2. **Proteger**
 3. **Levar**
 4. **Ativar**
 
-O cristal representa visualmente essa evolução.
+As três equipes participam da mesma fase atual.
 
-Conforme a equipe avança, seu cristal deve ficar progressivamente mais energizado utilizando a cor da própria equipe.
+A passagem de uma fase para a próxima é controlada manualmente pelo operador.
 
-Exemplo conceitual:
-
-* Encontrar → pouca energia;
-* Proteger → energia intermediária;
-* Levar → cristal quase completo;
-* Ativar → cristal totalmente energizado.
-
-A evolução não deve ser apresentada apenas por uma barra de progresso. O próprio cristal deve comunicar visualmente o estágio da equipe.
+O sistema NÃO deve iniciar automaticamente a próxima fase.
 
 ---
 
-## Cristais
+# Tempo das fases
 
-Cada equipe possui um cristal independente.
+Existe apenas **um cronômetro compartilhado por fase**.
 
-Os cristais devem ser construídos diretamente em código com Three.js / React Three Fiber, sem depender de modelos criados em Blender ou outros softwares externos.
+Não existem:
 
-O visual deve explorar elementos como:
+* timer geral da arena;
+* timers individuais por equipe;
+* timers individuais por missão.
 
+As durações fixas são:
+
+```text
+FASE 1 — ENCONTRAR
+08:00
+
+FASE 2 — PROTEGER
+06:30
+
+FASE 3 — LEVAR
+06:30
+
+FASE 4 — ATIVAR
+04:30
+```
+
+Todos os cronômetros são regressivos.
+
+---
+
+# Início da fase
+
+Quando uma fase é preparada:
+
+* o cronômetro recebe sua duração fixa;
+* as três equipes elegíveis ficam em estado `EM MISSÃO`;
+* o cronômetro permanece parado.
+
+O operador utiliza:
+
+```text
+INICIAR FASE
+```
+
+para iniciar a contagem.
+
+Exemplo:
+
+```text
+FASE 2 — PROTEGER
+
+06:30
+
+[ INICIAR FASE ]
+```
+
+Depois:
+
+```text
+06:29
+06:28
+06:27
+...
+```
+
+---
+
+# Regra dos 2 minutos
+
+Essa é uma regra central da competição.
+
+A **primeira equipe que concluir uma fase** dispara uma janela final obrigatória de:
+
+```text
+02:00
+```
+
+O cronômetro compartilhado deve ser alterado imediatamente para `02:00`, independentemente do tempo que existia anteriormente.
+
+Exemplo:
+
+```text
+05:17
+```
+
+Primeira equipe conclui:
+
+```text
+02:00
+```
+
+Outro exemplo:
+
+```text
+00:38
+```
+
+Primeira equipe conclui:
+
+```text
+02:00
+```
+
+Portanto, os dois minutos podem tanto reduzir quanto aumentar o tempo restante.
+
+A regra é simplesmente:
+
+```ts
+if (!firstCompletionTriggered) {
+  remainingTime = 120;
+  firstCompletionTriggered = true;
+}
+```
+
+---
+
+# Disparo único dos 2 minutos
+
+Os `02:00` só podem ser disparados **uma única vez por fase**.
+
+Quando a segunda equipe concluir:
+
+* não reiniciar;
+* não voltar para `02:00`;
+* não adicionar tempo;
+* não criar uma nova janela.
+
+Exemplo:
+
+```text
+02:00
+↓
+01:19
+```
+
+Segunda equipe conclui.
+
+O relógio continua:
+
+```text
+01:19
+01:18
+01:17
+...
+```
+
+A terceira equipe possui somente o tempo restante.
+
+---
+
+# Encerramento da fase
+
+Se as três equipes concluírem antes de `00:00`:
+
+* parar imediatamente o cronômetro;
+* marcar a fase como encerrada;
+* aguardar decisão do operador.
+
+Não iniciar automaticamente a próxima fase.
+
+Se o cronômetro chegar a:
+
+```text
+00:00
+```
+
+a fase termina.
+
+Equipes que concluíram:
+
+```text
+CONCLUÍDO
+```
+
+Equipes que não concluíram:
+
+```text
+TEMPO ENCERRADO
+```
+
+Não aplicar automaticamente:
+
+* penalidades;
+* pontos;
+* perda de pontos;
+* conclusão da missão;
+* qualquer outra regra.
+
+---
+
+# Status das equipes
+
+Durante uma fase, uma equipe pode estar em:
+
+```text
+EM MISSÃO
+CONCLUÍDO
+TEMPO ENCERRADO
+```
+
+Na fase final também pode existir:
+
+```text
+CRISTAL ATIVADO
+```
+
+O status deve ser derivado do estado real da competição.
+
+Não deve existir um seletor manual de status.
+
+---
+
+# Progressão dos cristais
+
+Cada equipe possui um cristal próprio:
+
+* Vermelho;
+* Azul;
+* Verde.
+
+Os cristais utilizam a fase atual como referência para sua evolução energética.
+
+Mapeamento:
+
+```text
+ENCONTRAR → estágio 1
+PROTEGER  → estágio 2
+LEVAR     → estágio 3
+ATIVAR    → estágio 4
+```
+
+---
+
+# Estrutura visual dos cristais
+
+O cristal deve ser criado diretamente em código com:
+
+* Three.js;
+* React Three Fiber.
+
+Não utilizar:
+
+* Blender;
+* modelos 3D externos obrigatórios.
+
+A geometria deve possuir várias facetas para que a rotação seja facilmente percebida.
+
+Os cristais precisam possuir:
+
+* geometria facetada;
+* contornos das faces;
 * transparência;
-* brilho interno;
-* emissão de luz;
+* emissão;
+* volume energético interno;
+* quatro pontos internos de energia;
+* veios ou rachaduras energéticas;
 * Bloom;
-* partículas;
 * pulsação;
-* rotação sutil;
-* linhas ou fluxos de energia;
-* variação de intensidade de acordo com o progresso.
-
-As cores principais são:
-
-* Vermelho → Titã Vermelho;
-* Azul → Titã Azul;
-* Verde → Titã Verde.
-
-O objetivo é obter aparência sci-fi e energética, evitando aspecto cartunesco ou de animação simples.
+* rotação progressiva.
 
 ---
 
-## Ativação final
+# Contornos do cristal
 
-Quando uma equipe concluir a etapa **Ativar**, deve existir uma animação especial.
+Os contornos das faces precisam ser claramente visíveis.
 
-Fluxo visual esperado:
+Mesmo regiões ainda não energizadas devem permanecer legíveis.
 
-1. o cristal começa a pulsar;
-2. sua energia aumenta;
-3. partículas e efeitos se intensificam;
-4. o cristal se desprende da posição da equipe;
-5. desloca-se em direção ao centro da tela;
-6. chega ao Núcleo Planetário;
-7. ocorre um impacto/pulso de energia;
-8. o núcleo passa a representar a energia daquela equipe.
+Região sem energia:
 
-Essa animação será implementada com GSAP em conjunto com a cena Three.js.
+* contorno discreto;
+* cor escura relacionada à equipe;
+* baixa emissão.
 
-Não é necessário que toda essa sequência exista na primeira versão do projeto.
+Região energizada:
+
+* contorno mais claro;
+* emissão maior;
+* maior resposta ao Bloom.
+
+O objetivo é melhorar:
+
+```text
+silhueta
++
+facetas
++
+profundidade
++
+percepção de giro
+```
+
+Não transformar o cristal em um wireframe grosseiro.
+
+---
+
+# Quatro pontos de energia
+
+Cada cristal possui quatro núcleos luminosos internos.
+
+Eles são marcos de progressão, não o efeito principal.
+
+Distribuição:
+
+```text
+P4 — região superior
+P3 — superior/intermediária
+P2 — inferior/intermediária
+P1 — região inferior
+```
+
+Progressão:
+
+```text
+ENCONTRAR → P1
+PROTEGER  → P1 + P2
+LEVAR     → P1 + P2 + P3
+ATIVAR    → P1 + P2 + P3 + P4
+```
+
+Os pontos devem parecer fontes internas de energia, e não LEDs.
+
+---
+
+# Preenchimento energético
+
+O principal indicador de progresso é o **volume do cristal energizado**.
+
+A energia nasce na região inferior e sobe progressivamente.
+
+Aproximação:
+
+```text
+ENCONTRAR → 25%
+PROTEGER  → 50%
+LEVAR     → 75%
+ATIVAR    → 100%
+```
+
+A fronteira entre área energizada e não energizada não deve ser horizontal e perfeita.
+
+Utilizar:
+
+* irregularidade;
+* noise;
+* veios;
+* variação entre faces.
+
+O efeito deve parecer energia se propagando pelo material.
+
+---
+
+# Velocidade dos cristais
+
+A velocidade de rotação aumenta conforme a fase.
+
+Referência:
+
+```text
+ENCONTRAR → 1.0x
+PROTEGER  → 1.35x
+LEVAR     → 1.75x
+ATIVAR    → 2.25x
+```
+
+A alteração de velocidade deve ser progressiva.
+
+Não transformar o cristal em uma hélice.
+
+A percepção do movimento deve vir de:
+
+```text
+facetas
++
+contornos
++
+luz
++
+rotação
+```
+
+---
+
+# Estado Ativar
+
+Na fase `ATIVAR`, o cristal deve transmitir sobrecarga energética.
+
+Utilizar de forma controlada:
+
+* quatro pontos ativos;
+* volume completamente energizado;
+* veios luminosos;
+* contornos fortes;
+* emissão elevada;
+* Bloom;
+* pulsação;
+* pequenos clarões internos;
+* microvibração sutil.
+
+Ainda deve ser possível distinguir:
+
+* geometria;
+* faces;
+* profundidade;
+* interior.
+
+Não transformar o cristal em uma mancha de luz.
+
+---
+
+# Partículas
+
+Partículas não são mais o principal recurso visual do cristal.
+
+Durante funcionamento normal:
+
+```text
+quase nenhuma
+```
+
+Durante mudança de estado:
+
+```text
+poucas
+```
+
+Durante ativação e viagem:
+
+```text
+podem ser mais intensas
+```
+
+O cristal deve depender principalmente de:
+
+```text
+energia interna
++
+facetas
++
+contornos
++
+veios
++
+emissão
++
+Bloom
+```
+
+---
+
+# Ativação final
+
+Na fase `ATIVAR`, quando uma equipe concluir sua ativação, seu cristal pode executar a sequência cinematográfica já prevista:
+
+```text
+sobrecarga
+↓
+desprendimento
+↓
+viagem
+↓
+impacto
+↓
+absorção pelo Núcleo Planetário
+```
+
+Essa animação deve utilizar a implementação existente com:
+
+* GSAP;
+* React Three Fiber;
+* Three.js;
+* Postprocessing.
+
+---
+
+# Núcleo Planetário
+
+O Núcleo Planetário ocupa a área visual central da parte 3D do Display.
+
+Ele deve possuir um estado inicial tecnológico e energético mesmo sem cristais.
+
+Quando recebe cristais, precisa representar claramente quais equipes estão presentes.
+
+---
+
+# Energia armazenada no Núcleo
+
+Não utilizar simplesmente uma troca de cor geral.
+
+Cada energia precisa continuar reconhecível.
+
+Estados possíveis:
+
+```text
+nenhum cristal
+vermelho
+azul
+verde
+vermelho + azul
+vermelho + verde
+azul + verde
+vermelho + azul + verde
+```
+
+As energias podem aparecer através de:
+
+* regiões internas;
+* núcleos;
+* veios;
+* anéis;
+* fluxos;
+* setores;
+* órbitas;
+* pulsos.
+
+As cores devem coexistir sem imediatamente se transformarem em uma única cor indefinida.
+
+---
+
+# Estado máximo do Núcleo
+
+Com os três cristais:
+
+* Vermelho;
+* Azul;
+* Verde;
+
+o núcleo deve atingir seu estágio máximo.
+
+Pode apresentar:
+
+* emissão maior;
+* movimento interno mais intenso;
+* pulsação;
+* Bloom;
+* três energias visíveis;
+* maior atividade orbital.
+
+Ainda preservar a geometria.
 
 ---
 
@@ -113,123 +605,180 @@ Não é necessário que toda essa sequência exista na primeira versão do proje
 
 Rota:
 
-`/display`
+```text
+/display
+```
 
-Essa é a tela que será exibida no telão da arena.
+A tela é dividida conceitualmente em:
 
-Ela deve priorizar leitura à distância e impacto visual.
+```text
+ESQUERDA
+PLACAR / INFORMAÇÃO
 
-## Informações
+DIREITA
+EXPERIÊNCIA VISUAL
+```
 
-O display deve apresentar:
+A esquerda ocupa aproximadamente:
 
-* Titã Vermelho;
-* Titã Azul;
-* Titã Verde;
-* cristal de cada equipe;
-* pontuação de cada equipe;
-* missão atual;
-* cronômetro da missão atual;
-* ranking;
-* cronômetro geral da arena;
-* Núcleo Planetário;
-* identidade visual Symbios;
-* logo FIAP;
-* logo Palo Alto Networks.
+```text
+42% – 45%
+```
+
+A direita:
+
+```text
+55% – 58%
+```
 
 ---
 
-## Organização visual
+# Placar
 
-O painel não deve parecer um dashboard corporativo tradicional.
+O lado esquerdo funciona como placar e ranking ao mesmo tempo.
 
-O elemento central da composição deve ser o **Núcleo Planetário**.
+Não manter cards redundantes mais ranking separado.
 
-Os três cristais devem ser distribuídos ao redor ou em relação visual clara com o núcleo, permitindo que a futura animação de ativação faça sentido espacialmente.
+Cada equipe mostra:
 
-Cada área de equipe deve permitir identificar rapidamente:
-
-* equipe;
-* cor;
+* posição;
+* nome;
 * pontuação;
-* missão;
-* tempo;
-* estágio do cristal.
+* status na fase atual.
 
-O ranking deve estar sempre disponível, mas não deve competir visualmente com os cristais.
+Pontuação deve possuir grande destaque.
 
-Os cristais são os principais elementos da experiência.
+Exemplo conceitual:
+
+```text
+01
+TITÃ VERMELHO
+
+12.450
+PTS
+
+CONCLUÍDO
+```
 
 ---
 
-# Identidade visual
+# Ranking
 
-Utilizar como referência principalmente as páginas **3, 13 e 18** da proposta visual do Symbios.
+O ranking deriva automaticamente das pontuações.
 
-## Página 3
+Maior pontuação:
 
-Referência para:
+```text
+1º
+```
 
-* atmosfera;
-* universo Symbios;
-* cenário escuro;
-* tecnologia;
+Não existe edição manual da posição.
+
+Mudanças podem usar pequenas transições.
+
+---
+
+# Área visual
+
+Na direita:
+
+* três cristais;
+* Núcleo Planetário;
 * energia;
-* contraste;
-* identidade da marca.
+* animações.
 
-## Página 13
+Composição preferencial semelhante a:
 
-Referência conceitual para o telão, contendo:
+```text
+             VERMELHO
+                 ◆
 
-* ranking;
-* tempo;
-* missão atual;
-* cristal como elemento visual dominante.
+              NÚCLEO
 
-O layout não precisa ser copiado literalmente.
+         ◆                 ◆
+       AZUL              VERDE
+```
 
-A nova aplicação precisa acomodar três cristais independentes e equipes que podem estar em missões diferentes.
-
-## Página 18
-
-Referência para a identidade das equipes:
-
-* Titã Vermelho;
-* Titã Azul;
-* Titã Verde.
-
-As cores das equipes devem aparecer principalmente através de energia, iluminação, cristal, detalhes da interface e efeitos visuais.
+Não precisa seguir literalmente essa disposição, mas os três cristais precisam possuir relação espacial clara com o núcleo.
 
 ---
 
-## Linguagem visual
+# Cronômetro no Display
 
-Priorizar:
+Existe somente um cronômetro da fase.
 
-* fundo preto ou muito escuro;
-* azul/ciano como linguagem tecnológica da interface;
-* vermelho, azul e verde para diferenciação das equipes;
-* luzes;
-* partículas;
-* elementos holográficos;
-* linhas finas;
-* transparências;
-* painéis tecnológicos;
-* profundidade;
-* contraste alto.
+Antes da primeira conclusão:
 
-Evitar:
+```text
+FASE 02 — PROTEGER
 
-* cards brancos;
-* aparência de sistema administrativo no display;
-* excesso de caixas;
-* visual genérico de dashboard;
-* elementos infantis;
-* excesso de informação;
-* animações exageradas acontecendo o tempo inteiro.
+TEMPO RESTANTE
 
-Os efeitos mais fortes devem ser reservados para acontecimentos importantes da competição.
+04:31
+```
+
+Depois da primeira conclusão:
+
+```text
+JANELA FINAL
+
+02:00
+```
+
+O mesmo relógio continua:
+
+```text
+01:59
+01:58
+...
+```
+
+A mudança visual deve informar claramente à plateia que uma equipe concluiu e começou a janela final.
+
+---
+
+# Fundo do Display
+
+O fundo continua escuro, mas não deve esconder os cristais.
+
+Utilizar uma composição baseada em:
+
+```text
+preto
++
+azul petróleo muito escuro
++
+ciano discreto
+```
+
+Pode usar:
+
+* gradiente;
+* haze;
+* grid;
+* vinheta;
+* luz ambiente discreta.
+
+O objetivo é aumentar a leitura de:
+
+* contornos;
+* silhuetas;
+* facetas;
+* profundidade.
+
+---
+
+# Logos
+
+Exibir:
+
+* Symbios;
+* FIAP;
+* Palo Alto Networks.
+
+Symbios pode possuir maior destaque.
+
+FIAP e Palo Alto funcionam como marcas institucionais.
 
 ---
 
@@ -237,254 +786,318 @@ Os efeitos mais fortes devem ser reservados para acontecimentos importantes da c
 
 Rota:
 
-`/admin`
+```text
+/admin
+```
 
-O Admin é uma ferramenta operacional.
+O Admin prioriza:
 
-Ao contrário do Display, deve priorizar:
-
-* velocidade;
+* rapidez;
 * clareza;
-* segurança;
-* facilidade de operação.
+* segurança operacional.
 
-Não precisa ter a mesma complexidade visual do telão.
-
----
-
-## Controle por equipe
-
-Para cada equipe, o operador deve conseguir controlar:
-
-### Pontuação
-
-* visualizar pontuação atual;
-* definir pontuação manualmente;
-* adicionar pontos;
-* remover pontos.
-
-### Missão
-
-Selecionar individualmente:
-
-* Encontrar;
-* Proteger;
-* Levar;
-* Ativar.
-
-A mudança da missão de uma equipe não pode alterar a missão das outras.
-
-### Tempo da missão
-
-Cada equipe possui um cronômetro independente para sua missão atual.
-
-O operador deve conseguir:
-
-* definir tempo;
-* iniciar;
-* pausar;
-* continuar;
-* resetar;
-* ajustar quando necessário.
+Não precisa reproduzir a complexidade visual do Display.
 
 ---
 
-# Tempo geral
+# Controle da fase
 
-A arena possui também um cronômetro geral independente dos cronômetros das equipes.
+O Admin deve possuir uma área principal com:
 
-O operador deve conseguir:
+```text
+FASE ATUAL
 
-* definir o tempo inicial;
-* iniciar;
-* pausar;
-* continuar;
-* resetar;
-* ajustar manualmente.
+02 — PROTEGER
 
-O Display deve refletir imediatamente essas alterações.
+TEMPO
 
----
+06:30
+```
 
-# Ranking
+Ações:
 
-O ranking é calculado a partir da pontuação atual das três equipes.
+```text
+INICIAR FASE
+PAUSAR FASE
+CONTINUAR FASE
+```
 
-Deve apresentar as equipes ordenadas da maior para a menor pontuação.
-
-Quando houver mudança de posição, futuramente poderá existir uma pequena animação de transição.
-
-O ranking não é editado diretamente.
-
-Ele é consequência das pontuações definidas no Admin.
+A mudança para próxima fase é manual.
 
 ---
 
-# Sincronização
+# Concluir missão
 
-Admin e Display devem compartilhar o mesmo estado da arena.
+Cada equipe possui:
 
-Fluxo esperado:
+```text
+CONCLUIR MISSÃO
+```
 
-`Admin → estado da arena → Socket.IO → Display`
+Ao concluir:
 
-Uma alteração realizada no Admin deve aparecer imediatamente no Display sem necessidade de atualizar a página.
+1. marcar somente aquela equipe como concluída;
+2. registrar sua conclusão;
+3. se for a primeira conclusão da fase:
 
-O sistema deve funcionar:
+   * definir o relógio para `02:00`;
+   * marcar `firstCompletionTriggered = true`;
+4. se não for a primeira:
 
-### Cenário 1
+   * não alterar o relógio.
 
-Duas abas ou janelas no mesmo computador.
+Cliques duplicados em uma equipe já concluída devem ser ignorados.
 
-### Cenário 2
+---
 
-Admin em um computador e Display em outro computador conectado à mesma rede local.
+# Pontuação
 
-Nenhum dos dois cenários deve depender de internet.
+O operador possui três formas de alterar pontos.
+
+## 1. Botões rápidos positivos
+
+```text
++100
++200
++300
+```
+
+## 2. Botões rápidos negativos
+
+```text
+-25
+-100
+-200
+-300
+```
+
+## 3. Soma manual
+
+Campo:
+
+```text
+ADICIONAR PONTOS
+
+[ 175 ]
+
+[ ADICIONAR ]
+```
+
+Funcionamento:
+
+```ts
+newScore = currentScore + enteredValue
+```
+
+Após aplicar, limpar o campo.
+
+---
+
+# Definir pontuação total
+
+Manter também a opção já existente:
+
+```text
+DEFINIR TOTAL
+
+[ 3250 ]
+
+[ APLICAR ]
+```
+
+Funcionamento:
+
+```ts
+newScore = enteredValue
+```
+
+As funções:
+
+```text
+ADICIONAR PONTOS
+```
+
+e:
+
+```text
+DEFINIR TOTAL
+```
+
+devem ser visualmente diferentes para evitar erro operacional.
+
+---
+
+# Reset da arena
+
+O reset é destrutivo.
+
+Deve solicitar confirmação.
+
+Deve restaurar:
+
+* fase 1;
+* timer `08:00`;
+* firstCompletionTriggered = false;
+* pontuações;
+* status;
+* ativações;
+* estado dos cristais;
+* estado do Núcleo Planetário.
+
+---
+
+# Histórico operacional
+
+Manter histórico recente quando disponível.
+
+Pode registrar:
+
+* início da fase;
+* pausa;
+* continuação;
+* pontuação;
+* conclusão;
+* mudança de fase;
+* ativação;
+* reset.
+
+Usar localStorage.
+
+Não utilizar banco.
 
 ---
 
 # Persistência
 
-Não utilizar banco de dados.
+Persistir via localStorage:
 
-O estado necessário deve ser mantido de maneira simples através de:
+* fase atual;
+* tempo restante;
+* estado do cronômetro;
+* firstCompletionTriggered;
+* status das equipes;
+* pontuações;
+* cristais ativados;
+* histórico recente.
 
-* estado em memória durante a execução;
-* localStorage no computador controlador.
+Após refresh, restaurar o estado corretamente.
 
-O objetivo é evitar perda acidental das configurações caso a página do Admin seja atualizada.
+Não reproduzir animações cinematográficas já concluídas apenas por causa de refresh.
 
 ---
 
-# Estado da arena
+# Comunicação
 
-O estado central deve representar aproximadamente:
+Utilizar:
 
-```ts
-Arena {
-  generalTimer
-  teams
-}
+* Node.js;
+* Socket.IO.
 
-Team {
-  id
-  name
-  color
-  score
-  currentMission
-  missionTimer
-  crystalProgress
-  activated
-}
+Fluxo:
+
+```text
+ADMIN
+↓
+estado/evento
+↓
+Socket.IO
+↓
+DISPLAY
 ```
 
-Os nomes e estruturas podem ser ajustados durante a implementação caso exista uma solução melhor.
+Deve funcionar:
+
+* no mesmo computador;
+* em dois computadores na mesma rede local.
+
+Sem internet.
 
 ---
 
-# Tecnologias definidas
+# Stack
 
-Frontend:
+## Frontend
 
 * React
 * TypeScript
 * Vite
-
-Estado:
-
 * Zustand
 
-Visual 3D:
+## Visual
 
 * Three.js
 * React Three Fiber
 * Drei
-
-Efeitos:
-
 * React Postprocessing
-
-Animações:
-
 * GSAP
 
-Comunicação:
+## Comunicação
 
 * Node.js
 * Socket.IO
 
-Persistência:
+## Persistência
 
 * localStorage
 
-Não utilizar:
+---
+
+# Não utilizar
 
 * banco de dados;
 * Prisma;
+* Firebase;
 * serviços cloud;
 * dependência de internet;
-* Blender;
+* Blender obrigatório;
 * modelos 3D externos obrigatórios.
 
 ---
 
-# Prioridades
+# Princípio visual
 
-A implementação deve acontecer incrementalmente.
+A interface deve seguir a linguagem Symbios:
 
-## Prioridade 1 — funcionamento
+* sci-fi;
+* escura;
+* tecnológica;
+* energética;
+* holográfica;
+* alto contraste;
+* azul/ciano estrutural;
+* vermelho, azul e verde para as equipes.
 
-Primeiro garantir:
-
-* Admin funcional;
-* Display funcional;
-* comunicação entre ambos;
-* equipes independentes;
-* pontuação;
-* missões;
-* timers;
-* ranking;
-* persistência.
-
-## Prioridade 2 — identidade visual
-
-Depois:
-
-* composição do Display;
-* identidade Symbios;
-* layout das equipes;
-* núcleo central;
-* integração dos logos.
-
-## Prioridade 3 — cristais
-
-Depois:
-
-* geometria;
-* materiais;
-* iluminação;
-* progresso;
-* Bloom;
-* partículas.
-
-## Prioridade 4 — animações
-
-Por último:
-
-* transições;
-* feedbacks;
-* evolução energética;
-* animação de ativação;
-* deslocamento do cristal;
-* reação do Núcleo Planetário.
+Evitar aparência de dashboard empresarial convencional.
 
 ---
 
-# Princípio do projeto
+# Princípio operacional
 
-A aplicação deve ser tecnicamente simples de operar, mas visualmente forte no telão.
+O Admin deve exigir o mínimo possível de interpretação durante a arena.
 
-A complexidade deve estar concentrada na experiência visual, e não na infraestrutura.
+O operador controla:
 
-Sempre preferir uma implementação simples e controlável quando uma solução mais complexa não trouxer benefício visível para a experiência da arena.
+```text
+fase
+tempo
+conclusões
+pontuação
+ativação
+```
+
+O sistema deve impedir ações duplicadas ou estados incoerentes sempre que possível.
+
+---
+
+# Fonte de verdade
+
+Quando existir conflito entre:
+
+* código legado;
+* prompts anteriores;
+* comentários antigos;
+* decisões anteriores;
+
+este arquivo `docs/PROJECT.md` representa a regra atual do projeto.
+
+Não preserve comportamento antigo apenas porque já existe no código se ele contradizer este documento.

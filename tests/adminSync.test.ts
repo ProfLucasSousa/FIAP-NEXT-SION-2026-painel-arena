@@ -4,7 +4,7 @@ import { Server as HttpServer } from 'node:http'
 import { once } from 'node:events'
 import { io, type Socket } from 'socket.io-client'
 import { createArenaStore, toArenaSnapshot } from '../src/store/arenaStore'
-import { getTeamCrystalProgress } from '../src/lib/crystalProgress'
+import { getCrystalProgress } from '../src/lib/crystalProgress'
 import type { ArenaSnapshot, CrystalActivationEvent } from '../src/types/arena'
 
 test('actual Socket.IO relay synchronizes operations and reconnected display without touching the live arena', { timeout: 15000 }, async () => {
@@ -50,27 +50,42 @@ test('actual Socket.IO relay synchronizes operations and reconnected display wit
       const received = once(display, 'arena:state')
       operation()
       await received
-      assert.deepEqual(wireValue(toArenaSnapshot(displayStore.getState())), wireValue(toArenaSnapshot(adminStore.getState())))
+      const displaySnapshot = wireValue(toArenaSnapshot(displayStore.getState()))
+      const adminSnapshot = wireValue(toArenaSnapshot(adminStore.getState()))
+      assert.equal(displaySnapshot.revision, adminSnapshot.revision)
+      assert.equal(displaySnapshot.phaseIndex, adminSnapshot.phaseIndex)
+      assert.equal(displaySnapshot.phaseStatus, adminSnapshot.phaseStatus)
+      assert.equal(displaySnapshot.firstCompletionTriggered, adminSnapshot.firstCompletionTriggered)
+      assert.deepEqual(displaySnapshot.teams, adminSnapshot.teams)
+      assert.ok(Math.abs(displaySnapshot.phaseTimer.remainingMs - adminSnapshot.phaseTimer.remainingMs) < 100)
+      assert.equal(displaySnapshot.phaseTimer.isRunning, adminSnapshot.phaseTimer.isRunning)
     }
-    await perform(() => adminStore.getState().startArena())
-    assert.equal(getTeamCrystalProgress(displayStore.getState().teams.red), 0)
+    await perform(() => adminStore.getState().startPhase())
+    assert.equal(getCrystalProgress(displayStore.getState().phaseIndex), 0)
     await perform(() => adminStore.getState().completeMission('red'))
-    assert.equal(displayStore.getState().teams.red.missionIndex, 0)
-    assert.equal(displayStore.getState().teams.red.missionTimer.isRunning, false)
-    assert.equal(getTeamCrystalProgress(displayStore.getState().teams.red), 1 / 3, 'live completion changes the crystal target')
-    assert.equal(getTeamCrystalProgress(displayStore.getState().teams.blue), 0)
-    assert.equal(getTeamCrystalProgress(displayStore.getState().teams.green), 0)
-    await perform(() => adminStore.getState().setMission('red', 1))
-    assert.equal(getTeamCrystalProgress(displayStore.getState().teams.red), 1 / 3, 'selecting the next mission keeps the earned charge')
-    assert.equal(displayStore.getState().teams.red.missionTimer.isRunning, false)
-    await perform(() => adminStore.getState().setTeamTimer('red', { isRunning: true }))
-    await perform(() => adminStore.getState().setTeamTimer('blue', { isRunning: false }))
-    await perform(() => adminStore.getState().pauseArena())
-    await perform(() => adminStore.getState().resumeArena())
-    assert.equal(displayStore.getState().teams.blue.missionTimer.isRunning, false)
+    assert.equal(displayStore.getState().teams.red.phaseCompleted, true)
+    assert.ok(displayStore.getState().phaseTimer.remainingMs <= 120_000)
+    assert.ok(displayStore.getState().phaseTimer.remainingMs > 119_900)
+    assert.equal(getCrystalProgress(displayStore.getState().phaseIndex), 0, 'completion does not change the shared visual phase')
+    await perform(() => adminStore.getState().pausePhase())
+    assert.equal(displayStore.getState().phaseStatus, 'paused')
+    await perform(() => adminStore.getState().resumePhase())
+    assert.equal(displayStore.getState().phaseStatus, 'running')
     await perform(() => adminStore.getState().adjustScore('green', 500))
     assert.equal(displayStore.getState().teams.green.score, 500)
-    await perform(() => adminStore.getState().setMission('red', 3))
+
+    await perform(() => adminStore.getState().completeMission('blue'))
+    await perform(() => adminStore.getState().completeMission('green'))
+    for (let phase = 1; phase < 4; phase++) {
+      await perform(() => adminStore.getState().prepareNextPhase())
+      assert.equal(getCrystalProgress(displayStore.getState().phaseIndex), phase / 3)
+      await perform(() => adminStore.getState().startPhase())
+      if (phase < 3) {
+        await perform(() => adminStore.getState().completeMission('red'))
+        await perform(() => adminStore.getState().completeMission('blue'))
+        await perform(() => adminStore.getState().completeMission('green'))
+      }
+    }
     await perform(() => adminStore.getState().activateCrystal('red'))
     const activation: CrystalActivationEvent = { activationId: 'isolated-test-activation', teamId: 'red', emittedAt: Date.now() }
     const animated = once(display, 'crystal:activate')

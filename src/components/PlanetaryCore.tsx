@@ -80,11 +80,6 @@ export function PlanetaryCore({ activeTeams, impactEvent, coreRef }: PlanetaryCo
   const activeKey = activeTeams.map((team) => team.id).join(',')
   const energyState = useMemo(() => getCoreEnergyState(activeTeams), [activeKey])
   const activeCount = energyState.activeCount
-  const accumulatedColor = useMemo(() => {
-    const mixed = new THREE.Color('#0b6577')
-    activeTeams.forEach((team) => mixed.add(new THREE.Color(team.color).multiplyScalar(0.24)))
-    return mixed
-  }, [activeKey])
 
   useLayoutEffect(() => {
     const target = energyState.level
@@ -149,8 +144,8 @@ export function PlanetaryCore({ activeTeams, impactEvent, coreRef }: PlanetaryCo
       innerCore.current.rotation.x = Math.sin(elapsed * 0.35) * (0.05 + stable.energy * 0.04)
     }
     if (innerMaterial.current) {
-      innerMaterial.current.color.copy(accumulatedColor).multiplyScalar(0.2 + stable.energy * 0.12)
-      innerMaterial.current.emissive.copy(accumulatedColor)
+      innerMaterial.current.color.set('#06212b').multiplyScalar(0.75 + stable.energy * 0.12)
+      innerMaterial.current.emissive.set('#28cce8')
       innerMaterial.current.emissiveIntensity = 0.2 + stable.energy * 0.72 + impact.flash * 1.8 + maximum.surge * 1.15
       innerMaterial.current.transmission = 0.1 + stable.energy * 0.16
     }

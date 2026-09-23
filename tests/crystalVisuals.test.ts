@@ -5,54 +5,39 @@ import * as THREE from 'three'
 import { CRYSTAL_ENERGY_LEVELS, CRYSTAL_ROTATION_SPEEDS, CRYSTAL_SOURCE_LEVELS, CRYSTAL_SOURCE_HEIGHTS, createCrystalEnergyState, getCrystalStage, isCrystalEnergySettled, transitionCrystalEnergy, updateCrystalNodes } from '../src/animations/crystalEnergy'
 import { createCrystalActivationTimeline } from '../src/animations/crystalActivation'
 import { createCrystalGeometry, createCrystalLinks } from '../src/components/crystalGeometry'
-import { applyCrystalShellEnergy, crystalFillGLSL, energyFragmentShader } from '../src/components/crystalShaders'
-import { getTeamCrystalProgress } from '../src/lib/crystalProgress'
-import { applyArenaOperation, createInitialArena } from '../src/lib/arenaOperations'
-import { TEAM_IDS } from '../src/types/arena'
+import { applyCrystalShellEnergy, crystalFillGLSL, edgeFragmentShader, energyFragmentShader } from '../src/components/crystalShaders'
+import { getCoreEnergyState } from '../src/lib/coreEnergy'
+import { getCrystalProgress } from '../src/lib/crystalProgress'
+import { createInitialArena } from '../src/lib/arenaOperations'
+import { TEAM_IDS, type TeamId } from '../src/types/arena'
 
 after(() => gsap.ticker.sleep())
 
-test('completion charges each team independently, without advancing its mission or requiring a reload', () => {
-  for (const id of TEAM_IDS) for (let mission = 0; mission < 3; mission++) {
-    let arena = createInitialArena()
-    arena.teams[id].missionIndex = mission
-    const visual = createCrystalEnergyState(getCrystalStage(getTeamCrystalProgress(arena.teams[id])))
-    arena = applyArenaOperation(arena, { type: 'complete', id }, 1000)!.arena
-    assert.equal(arena.teams[id].missionIndex, mission)
-    assert.equal(arena.teams[id].missionTimer.isRunning, false)
-    assert.equal(arena.teams[id].crystalActivated, false, 'completion must not trigger a flight')
-    const target = getCrystalStage(getTeamCrystalProgress(arena.teams[id]))
-    assert.equal(target, mission + 1)
-    const timeline = transitionCrystalEnergy(visual, target).pause().time(0.8)
-    assert.ok(visual.energy > CRYSTAL_ENERGY_LEVELS[mission])
-    assert.ok(visual.energy < CRYSTAL_ENERGY_LEVELS[target], 'charge is gradual')
-    timeline.totalProgress(1)
-    updateCrystalNodes(visual)
-    const reloaded = createCrystalEnergyState(target)
-    assert.equal(visual.energy, reloaded.energy)
-    assert.deepEqual(visual.nodes.toArray(), reloaded.nodes.toArray())
-    for (const otherId of TEAM_IDS.filter(other => other !== id)) {
-      assert.equal(getTeamCrystalProgress(arena.teams[otherId]), 0)
+test('shared phase maps every crystal to the same 25%, 50%, 75% and 100% charge', () => {
+  const expectedProgress = [0, 1 / 3, 2 / 3, 1]
+  for (let phase = 0; phase < 4; phase++) {
+    const progress = getCrystalProgress(phase)
+    assert.equal(progress, expectedProgress[phase])
+    const stage = getCrystalStage(progress)
+    assert.equal(stage, phase)
+    for (const id of TEAM_IDS) {
+      const visual = createCrystalEnergyState(stage)
+      assert.equal(visual.energy, CRYSTAL_ENERGY_LEVELS[phase], `${id} follows the shared phase`)
     }
-    // The manual next-mission action should not discharge or recharge the crystal.
-    arena = applyArenaOperation(arena, { type: 'mission', id, index: mission + 1 }, 2000)!.arena
-    assert.equal(getCrystalStage(getTeamCrystalProgress(arena.teams[id])), target)
-    assert.equal(isCrystalEnergySettled(visual, target), true)
-    timeline.kill()
   }
 })
 
-test('activation stays capped at full charge and manual rollback returns to the selected level', () => {
-  let arena = createInitialArena()
-  arena.teams.red.missionIndex = 3
-  assert.equal(getTeamCrystalProgress(arena.teams.red), 1)
-  arena = applyArenaOperation(arena, { type: 'activate', id: 'red' }, 1000)!.arena
-  assert.equal(getTeamCrystalProgress(arena.teams.red), 1)
-  const visual = createCrystalEnergyState(3)
-  arena = applyArenaOperation(arena, { type: 'mission', id: 'red', index: 0 }, 2000)!.arena
-  const timeline = transitionCrystalEnergy(visual, getCrystalStage(getTeamCrystalProgress(arena.teams.red))).pause()
+test('phase transition charges gradually and settles identically after a reload', () => {
+  const visual = createCrystalEnergyState(0)
+  const target = getCrystalStage(getCrystalProgress(2))
+  const timeline = transitionCrystalEnergy(visual, target).pause().time(0.8)
+  assert.ok(visual.energy > CRYSTAL_ENERGY_LEVELS[0])
+  assert.ok(visual.energy < CRYSTAL_ENERGY_LEVELS[target])
   timeline.totalProgress(1)
-  assert.equal(isCrystalEnergySettled(visual, 0), true)
+  updateCrystalNodes(visual)
+  const reloaded = createCrystalEnergyState(target)
+  assert.equal(visual.energy, reloaded.energy)
+  assert.deepEqual(visual.nodes.toArray(), reloaded.nodes.toArray())
   timeline.kill()
 })
 
@@ -144,6 +129,21 @@ test('body emission is independent of markers and shell shares its fill uniforms
   assert.ok(shader.vertexShader.includes('vCrystalPosition = position'))
   assert.ok(shader.fragmentShader.includes('roughnessFactor = mix'))
   assert.ok(shader.fragmentShader.includes('totalEmissiveRadiance += uColor * crystalFill'))
+  assert.ok(edgeFragmentShader.includes('0.16 + fill'), 'the inactive contour remains legible')
+  assert.ok(edgeFragmentShader.includes('0.72 + fill'), 'the contour has a visible color floor')
+})
+
+test('planetary core preserves every independent red, blue and green combination', () => {
+  const arena = createInitialArena()
+  for (let mask = 0; mask < 8; mask++) {
+    const expected = TEAM_IDS.filter((_, index) => mask & (1 << index))
+    const activeTeams = expected.map(id => arena.teams[id])
+    const state = getCoreEnergyState(activeTeams)
+    assert.deepEqual(state.activeTeamIds, expected as TeamId[])
+    assert.equal(state.activeCount, expected.length)
+    assert.equal(state.level, expected.length / 3)
+    assert.equal(state.isMaximum, mask === 7)
+  }
 })
 
 test('all stage pairs settle correctly and interrupted transitions resume without a jump', () => {

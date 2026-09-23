@@ -5,13 +5,13 @@ import paloAltoLogo from '../../docs/logo_paloalto.png'
 import '../display.css'
 import { DisplayScoreboard } from '../components/DisplayScoreboard'
 import { useArenaSync } from '../hooks/useArenaSync'
-import { formatArenaTime } from '../lib/time'
+import { formatTime } from '../lib/time'
 import { ArenaCrystalScene } from '../scenes/ArenaCrystalScene'
 import { useArenaStore } from '../store/arenaStore'
 import { MISSIONS, TEAM_IDS, type CrystalActivationEvent, type TeamId } from '../types/arena'
 
 export function DisplayPage() {
-  const { teams, arenaTimer } = useArenaStore()
+  const { teams, phaseIndex, phaseTimer, phaseStatus, firstCompletionTriggered } = useArenaStore()
   const [activationEvents, setActivationEvents] = useState<Partial<Record<TeamId, CrystalActivationEvent>>>({})
   const [latestActivationEvent, setLatestActivationEvent] = useState<CrystalActivationEvent>()
   const handleCrystalActivation = useCallback((event: CrystalActivationEvent) => {
@@ -30,9 +30,10 @@ export function DisplayPage() {
         <img src={symbiosLogo} alt="Symbios" />
         <div><span>PROTOCOLO DE ARENA</span><strong>SETOR // 01</strong></div>
       </div>
-      <div className="arena-global-time">
-        <span>TEMPO DA ARENA</span>
-        <time dateTime={`PT${Math.floor(arenaTimer.elapsedMs / 1000)}S`}>{formatArenaTime(arenaTimer.elapsedMs)}</time>
+      <div className="arena-phase-time" data-final-window={firstCompletionTriggered || undefined}>
+        <span>FASE {String(phaseIndex + 1).padStart(2, '0')} · {MISSIONS[phaseIndex]}</span>
+        <small>{firstCompletionTriggered ? 'JANELA FINAL' : phaseStatus === 'finished' ? 'FASE ENCERRADA' : 'TEMPO RESTANTE'}</small>
+        <time dateTime={`PT${Math.ceil(phaseTimer.remainingMs / 1000)}S`}>{formatTime(phaseTimer.remainingMs)}</time>
       </div>
       <div className="arena-partners" aria-label="Apoio institucional">
         <span>REALIZAÇÃO</span>
@@ -43,18 +44,18 @@ export function DisplayPage() {
     </header>
 
     <section className="arena-display__body">
-      <DisplayScoreboard teams={sortedTeams} />
+      <DisplayScoreboard teams={sortedTeams} phaseIndex={phaseIndex} phaseStatus={phaseStatus} />
 
       <section className="arena-visual" aria-label="Arena dos cristais">
-        <ArenaCrystalScene teams={teams} activationEvents={activationEvents} latestActivationEvent={latestActivationEvent} />
+        <ArenaCrystalScene teams={teams} phaseIndex={phaseIndex} activationEvents={activationEvents} latestActivationEvent={latestActivationEvent} />
         <div className="arena-visual__frame" />
         <div className="arena-visual__axis" aria-hidden="true" />
         {TEAM_IDS.map((teamId) => {
           const team = teams[teamId]
           return <div className={`crystal-label crystal-label--${teamId}`} style={{ '--team': team.color } as React.CSSProperties} key={teamId}>
-            <span>{team.crystalActivated ? 'ENERGIA INTEGRADA' : `MISSÃO 0${team.missionIndex + 1}`}</span>
+            <span>{team.crystalActivated ? 'ENERGIA INTEGRADA' : `FASE 0${phaseIndex + 1}`}</span>
             <strong>{team.name}</strong>
-            <small>{MISSIONS[team.missionIndex]}</small>
+            <small>{MISSIONS[phaseIndex]}</small>
           </div>
         })}
         <div className="core-telemetry">

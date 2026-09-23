@@ -28,8 +28,8 @@ export function applyCrystalShellEnergy(
     .replace('#include <common>', `#include <common>\n${crystalFillGLSL}\nvarying vec3 vCrystalPosition;\nuniform vec3 uColor;`)
     .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
       float crystalRegion = crystalFill(vCrystalPosition);
-      roughnessFactor = mix(0.32, 0.17, crystalRegion);
-      diffuseColor.rgb *= mix(0.65, 1.35, crystalRegion);`)
+      roughnessFactor = mix(0.38, 0.17, crystalRegion);
+      diffuseColor.rgb *= mix(0.82, 1.35, crystalRegion);`)
     .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
       totalEmissiveRadiance += uColor * crystalFill(vCrystalPosition) * (0.65 + uEnergy * 0.4);`)
 }
@@ -120,9 +120,9 @@ export const edgeFragmentShader = energyField + /* glsl */ `
     float fill = filledRegion();
     float localEnergy = nodeField(vPosition.y);
     float pulse = overloadPulse();
-    float alpha = (0.075 + fill * (0.32 + uEnergy * 0.24)) * (0.35 + vFacing * 0.65);
+    float alpha = (0.16 + fill * (0.36 + uEnergy * 0.25)) * (0.48 + vFacing * 0.52);
     vec3 color = mix(uColor, vec3(1.0), localEnergy * pulse * 0.35);
-    gl_FragColor = vec4(color * (0.45 + fill * (0.85 + uEnergy * 0.45) + pulse * fill * 0.2), alpha);
+    gl_FragColor = vec4(color * (0.72 + fill * (0.9 + uEnergy * 0.48) + pulse * fill * 0.2), alpha);
   }
 `
 

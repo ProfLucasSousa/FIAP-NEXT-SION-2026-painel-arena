@@ -43,6 +43,8 @@ function createChannelParticles(): ChannelParticles {
 export function CoreEnergyChannel({ team, stableFx, fullFx }: { team: Team } & CoreEnergyProps) {
   const band = useRef<THREE.Mesh>(null)
   const bandMaterial = useRef<THREE.MeshBasicMaterial>(null)
+  const innerBand = useRef<THREE.Mesh>(null)
+  const innerBandMaterial = useRef<THREE.MeshBasicMaterial>(null)
   const node = useRef<THREE.Mesh>(null)
   const nodeMaterial = useRef<THREE.MeshBasicMaterial>(null)
   const particleMaterial = useRef<THREE.PointsMaterial>(null)
@@ -55,6 +57,8 @@ export function CoreEnergyChannel({ team, stableFx, fullFx }: { team: Team } & C
     const elapsed = state.clock.elapsedTime
     if (band.current) band.current.rotation.z += delta * (0.16 + energy * 0.22 + boost * 0.48)
     if (bandMaterial.current) bandMaterial.current.opacity = 0.48 + energy * 0.28 + fullFx.current.surge * 0.22
+    if (innerBand.current) innerBand.current.rotation.z -= delta * (0.24 + energy * 0.28 + boost * 0.4)
+    if (innerBandMaterial.current) innerBandMaterial.current.opacity = 0.54 + energy * 0.25 + fullFx.current.surge * 0.2
     if (node.current) node.current.scale.setScalar(0.78 + Math.sin(elapsed * (1.8 + energy * 1.2)) * 0.08 + fullFx.current.surge * 0.22)
     if (nodeMaterial.current) nodeMaterial.current.opacity = 0.68 + fullFx.current.surge * 0.28
 
@@ -75,6 +79,10 @@ export function CoreEnergyChannel({ team, stableFx, fullFx }: { team: Team } & C
       <torusGeometry args={[1.08, 0.026, 8, 72, Math.PI * 1.42]} />
       <meshBasicMaterial ref={bandMaterial} color={team.color} transparent opacity={0.6} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
     </mesh>
+    <mesh ref={innerBand} renderOrder={3}>
+      <torusGeometry args={[0.62, 0.042, 8, 64, Math.PI * 1.12]} />
+      <meshBasicMaterial ref={innerBandMaterial} color={team.color} transparent opacity={0.68} blending={THREE.AdditiveBlending} depthWrite={false} depthTest={false} toneMapped={false} />
+    </mesh>
     <points geometry={particles.geometry}>
       <pointsMaterial ref={particleMaterial} color={team.color} size={0.048} transparent opacity={0.6} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
     </points>
@@ -82,7 +90,7 @@ export function CoreEnergyChannel({ team, stableFx, fullFx }: { team: Team } & C
       <octahedronGeometry args={[0.115, 0]} />
       <meshBasicMaterial ref={nodeMaterial} color={team.color} transparent opacity={0.75} blending={THREE.AdditiveBlending} toneMapped={false} />
     </mesh>
-    <pointLight position={direction} color={team.color} intensity={0.72} distance={3.1} decay={2} />
+    <pointLight position={direction} color={team.color} intensity={0.95} distance={3.1} decay={2} />
   </group>
 }
 

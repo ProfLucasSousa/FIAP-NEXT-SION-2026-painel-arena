@@ -1,9 +1,15 @@
 import gsap from 'gsap'
 import { useLayoutEffect, useRef } from 'react'
 import { DisplayTeamCard } from './DisplayTeamCard'
-import type { Team } from '../types/arena'
+import type { PhaseStatus, Team } from '../types/arena'
 
-export function DisplayScoreboard({ teams }: { teams: Team[] }) {
+interface DisplayScoreboardProps {
+  teams: Team[]
+  phaseIndex: number
+  phaseStatus: PhaseStatus
+}
+
+export function DisplayScoreboard({ teams, phaseIndex, phaseStatus }: DisplayScoreboardProps) {
   const rows = useRef<Partial<Record<Team['id'], HTMLDivElement>>>({})
   const previousTops = useRef<Partial<Record<Team['id'], number>>>({})
   const orderKey = teams.map((team) => team.id).join(',')
@@ -39,7 +45,7 @@ export function DisplayScoreboard({ teams }: { teams: Team[] }) {
     </header>
     <div className="scoreboard__teams">
       {teams.map((team, index) => <div ref={(element) => { if (element) rows.current[team.id] = element }} key={team.id}>
-        <DisplayTeamCard team={team} rank={index + 1} />
+        <DisplayTeamCard team={team} rank={index + 1} phaseIndex={phaseIndex} phaseStatus={phaseStatus} />
       </div>)}
     </div>
     <footer className="scoreboard__footer"><span>03 TITÃS CONECTADOS</span><span>SYNC // ARENA</span></footer>

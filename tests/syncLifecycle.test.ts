@@ -100,7 +100,7 @@ test('actual sync hook rebinds a replaced store, rejects stale zeros and never e
     replacement.getState().reset()
     transport.arenaSocket.receive('arena:state', toArenaSnapshot(replacement.getState()))
     assert.equal(display.getState().teams.red.score, 0, 'a genuine newer reset still works')
-    assert.equal(display.getState().arenaStatus, 'waiting')
+    assert.equal(display.getState().phaseStatus, 'ready')
     effects!.unmount()
     assert.equal(transport.listeners.size, 0)
     assert.equal(transport.arenaSocket.handlers.get('connect').size, 0)

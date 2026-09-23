@@ -82,10 +82,10 @@ export function Crystal({ color, progress, activated = false, size = 1 }: Crysta
       group.current.position.y = Math.sin(elapsed * 11.4) * overload * 0.004
     }
     if (shell.current) {
-      shell.current.color.copy(teamColor).multiplyScalar(0.26)
+      shell.current.color.copy(teamColor).multiplyScalar(0.36)
       shell.current.emissive.copy(teamColor)
-      shell.current.emissiveIntensity = 0.008
-      shell.current.opacity = 0.38
+      shell.current.emissiveIntensity = 0.018
+      shell.current.opacity = 0.52
     }
     uniforms.uColor.value.copy(teamColor)
     uniforms.uNodes.value.copy(state.nodes)
@@ -143,7 +143,7 @@ export function Crystal({ color, progress, activated = false, size = 1 }: Crysta
       <shaderMaterial ref={(material) => { energyMaterials.current[2] = material }} uniforms={uniforms} vertexShader={crystalVertexShader} fragmentShader={veinFragmentShader} transparent depthWrite={false} side={THREE.FrontSide} blending={THREE.AdditiveBlending} toneMapped={false} />
     </mesh>
     <mesh geometry={geometry} renderOrder={4}>
-      <meshPhysicalMaterial ref={shell} onBeforeCompile={shadeShell} color={color} roughness={0.24} metalness={0.26} transmission={0.25} thickness={0.65} ior={1.4} clearcoat={0.55} clearcoatRoughness={0.18} flatShading transparent opacity={0.38} depthWrite={false} side={THREE.FrontSide} />
+      <meshPhysicalMaterial ref={shell} onBeforeCompile={shadeShell} color={color} roughness={0.28} metalness={0.3} transmission={0.18} thickness={0.7} ior={1.4} clearcoat={0.62} clearcoatRoughness={0.16} flatShading transparent opacity={0.52} depthWrite={false} side={THREE.FrontSide} />
     </mesh>
     <lineSegments geometry={edges} scale={1.002} renderOrder={5}>
       <shaderMaterial ref={(material) => { energyMaterials.current[3] = material }} uniforms={uniforms} vertexShader={crystalVertexShader} fragmentShader={edgeFragmentShader} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
