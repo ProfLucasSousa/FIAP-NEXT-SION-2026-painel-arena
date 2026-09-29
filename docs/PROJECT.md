@@ -1101,3 +1101,318 @@ Quando existir conflito entre:
 este arquivo `docs/PROJECT.md` representa a regra atual do projeto.
 
 Não preserve comportamento antigo apenas porque já existe no código se ele contradizer este documento.
+
+# Desfazer conclusão de missão
+
+Uma conclusão de missão pode acontecer por erro operacional.
+
+Por isso, o Admin deve permitir desfazer a conclusão mais recente da fase atual.
+
+A operação deve ser segura e restaurar exatamente o estado existente imediatamente antes da conclusão.
+
+---
+
+## Regra
+
+Sempre que o operador executar:
+
+```text
+CONCLUIR MISSÃO
+```
+
+o sistema deve armazenar um snapshot mínimo do estado imediatamente anterior à ação.
+
+Esse snapshot deve permitir restaurar:
+
+* status das equipes;
+* tempo restante da fase;
+* `firstCompletionTriggered`;
+* estado de encerramento da fase;
+* demais propriedades diretamente alteradas pela conclusão.
+
+Não é necessário armazenar todo o histórico da aplicação.
+
+---
+
+# Primeira conclusão
+
+Exemplo:
+
+Antes:
+
+```text
+FASE 1 — ENCONTRAR
+
+05:18
+
+Vermelho   EM MISSÃO
+Azul       EM MISSÃO
+Verde      EM MISSÃO
+
+firstCompletionTriggered = false
+```
+
+Vermelho conclui:
+
+```text
+02:00
+
+Vermelho   CONCLUÍDO
+Azul       EM MISSÃO
+Verde      EM MISSÃO
+
+firstCompletionTriggered = true
+```
+
+Se o operador utilizar:
+
+```text
+DESFAZER CONCLUSÃO
+```
+
+restaurar exatamente:
+
+```text
+05:18
+
+Vermelho   EM MISSÃO
+Azul       EM MISSÃO
+Verde      EM MISSÃO
+
+firstCompletionTriggered = false
+```
+
+Portanto, desfazer a primeira conclusão também deve desfazer o disparo da janela final de `02:00`.
+
+---
+
+# Segunda conclusão
+
+Exemplo:
+
+Vermelho já concluiu corretamente e disparou a janela final.
+
+Estado:
+
+```text
+01:21
+
+Vermelho   CONCLUÍDO
+Azul       EM MISSÃO
+Verde      EM MISSÃO
+
+firstCompletionTriggered = true
+```
+
+Azul é marcado como concluído por engano:
+
+```text
+01:21
+
+Vermelho   CONCLUÍDO
+Azul       CONCLUÍDO
+Verde      EM MISSÃO
+```
+
+Ao desfazer:
+
+```text
+01:21
+
+Vermelho   CONCLUÍDO
+Azul       EM MISSÃO
+Verde      EM MISSÃO
+
+firstCompletionTriggered = true
+```
+
+A janela final continua ativa porque a primeira conclusão do Vermelho continua válida.
+
+Não redefinir o relógio para `02:00`.
+
+---
+
+# Terceira conclusão
+
+Se a terceira equipe concluir e isso encerrar antecipadamente a fase, a conclusão também deve poder ser desfeita.
+
+Exemplo:
+
+Antes:
+
+```text
+00:26
+
+Vermelho   CONCLUÍDO
+Azul       CONCLUÍDO
+Verde      EM MISSÃO
+
+fase encerrada = false
+```
+
+Verde conclui:
+
+```text
+00:26
+
+Vermelho   CONCLUÍDO
+Azul       CONCLUÍDO
+Verde      CONCLUÍDO
+
+fase encerrada = true
+timer parado
+```
+
+Ao desfazer:
+
+```text
+00:26
+
+Vermelho   CONCLUÍDO
+Azul       CONCLUÍDO
+Verde      EM MISSÃO
+
+fase encerrada = false
+```
+
+O cronômetro deve retornar ao estado que possuía imediatamente antes da conclusão.
+
+Se estava rodando, deve voltar a rodar.
+
+Se estava pausado, deve permanecer pausado.
+
+---
+
+# Ordem de desfazer
+
+As conclusões devem ser desfeitas em ordem inversa.
+
+Utilizar comportamento LIFO:
+
+```text
+última conclusão
+↓
+pode ser desfeita primeiro
+```
+
+Exemplo:
+
+```text
+1. Vermelho concluiu
+2. Azul concluiu
+```
+
+Enquanto Azul for a conclusão mais recente, não permitir desfazer diretamente Vermelho.
+
+Primeiro:
+
+```text
+DESFAZER AZUL
+```
+
+Depois poderá existir:
+
+```text
+DESFAZER VERMELHO
+```
+
+Isso evita estados inconsistentes na regra dos 2 minutos.
+
+---
+
+# Interface Admin
+
+Quando uma equipe representar a conclusão mais recente e essa ação ainda puder ser revertida, exibir:
+
+```text
+✓ CONCLUÍDO
+
+[ ↶ DESFAZER CONCLUSÃO ]
+```
+
+O botão deve aparecer apenas quando a reversão for válida.
+
+Não mostrar três botões de desfazer independentes se apenas a última conclusão puder ser restaurada.
+
+---
+
+# Confirmação
+
+Desfazer uma conclusão não precisa exigir uma confirmação pesada.
+
+Pode utilizar:
+
+```text
+DESFAZER CONCLUSÃO DO TITÃ AZUL?
+
+Isso restaurará o estado da fase para imediatamente antes da conclusão.
+
+[CANCELAR] [DESFAZER]
+```
+
+Isso é suficiente para evitar outro clique acidental.
+
+---
+
+# Pontuação
+
+Desfazer uma conclusão NÃO deve alterar pontuação.
+
+Pontuação continua sendo controlada manualmente.
+
+Exemplo:
+
+se o operador concluiu uma equipe e depois concedeu `+300`, desfazer a conclusão não deve automaticamente remover esses `300`.
+
+A conclusão e a pontuação são operações independentes.
+
+---
+
+# Cristal e Display
+
+Se uma conclusão normal apenas altera o estado da fase, o Display deve retornar ao estado anterior normalmente.
+
+Na Fase 4, se a conclusão também resultar em ativação cinematográfica do cristal, essa ação deve ser tratada com cuidado.
+
+Não tentar reproduzir uma animação cinematográfica ao contrário.
+
+Se a ativação ainda não ocorreu, o undo funciona normalmente.
+
+Se o cristal já foi enviado visualmente ao Núcleo Planetário, tratar a reversão como restauração de estado:
+
+* cristal volta para sua posição normal;
+* núcleo deixa de considerar aquela energia;
+* não executar animação reversa.
+
+O objetivo é restaurar o estado correto, não animar o tempo para trás.
+
+---
+
+# Persistência
+
+O estado necessário para desfazer a conclusão mais recente deve ser armazenado junto ao estado da arena.
+
+Após refresh do Admin, o undo ainda deve continuar disponível quando fizer sentido.
+
+Após:
+
+* iniciar nova fase;
+* resetar arena;
+
+limpar os snapshots de conclusões da fase anterior.
+
+---
+
+# Fonte de verdade
+
+A ação:
+
+```text
+DESFAZER CONCLUSÃO
+```
+
+deve restaurar o estado imediatamente anterior à conclusão correspondente.
+
+Não tente reconstruir esse estado através de regras inversas.
+
+Prefira restaurar um snapshot conhecido.

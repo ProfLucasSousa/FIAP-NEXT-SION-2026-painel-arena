@@ -78,12 +78,15 @@ export function ArenaCrystalActor({ team, progress, homePosition, size, activati
   }
 
   useLayoutEffect(() => {
-    if (animating.current) return
     if (!team.crystalActivated) {
+      timeline.current?.kill()
+      animating.current = false
+      setCinematicActive(false)
       setDelivered(false)
       resetAtHome()
       return
     }
+    if (animating.current) return
     if (!activationEvent) {
       setDelivered(true)
       if (flightGroup.current) flightGroup.current.visible = false

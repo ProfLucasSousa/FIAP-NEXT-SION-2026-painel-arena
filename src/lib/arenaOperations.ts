@@ -4,6 +4,7 @@ import {
   PHASE_DURATION_SECONDS,
   TEAM_IDS,
   type Arena,
+  type CompletionSnapshot,
   type PhaseStatus,
   type PhaseTimer,
   type Team,
@@ -109,14 +110,32 @@ export type ArenaOperation =
   | { type: 'start-phase' | 'pause-phase' | 'resume-phase' | 'prepare-next-phase' | 'reset' }
   | { type: 'score'; id: TeamId; value: number; relative?: boolean }
   | { type: 'complete' | 'activate'; id: TeamId }
+  | { type: 'undo-completion'; snapshot: CompletionSnapshot }
   | { type: 'undo'; action: UndoAction }
 
-interface OperationResult { arena: Arena; description: string; undo?: UndoAction }
+interface OperationResult { arena: Arena; description: string; undo?: UndoAction; completionSnapshot?: CompletionSnapshot }
+
+function snapshotCompletion(arena: Arena, teamId: TeamId): CompletionSnapshot {
+  return {
+    phaseIndex: arena.phaseIndex,
+    teamId,
+    phaseTimer: {
+      remainingMs: arena.phaseTimer.remainingMs,
+      isRunning: arena.phaseTimer.isRunning,
+    },
+    phaseStatus: arena.phaseStatus,
+    firstCompletionTriggered: arena.firstCompletionTriggered,
+    teamStates: Object.fromEntries(TEAM_IDS.map(id => [id, {
+      phaseCompleted: arena.teams[id].phaseCompleted,
+      crystalActivated: arena.teams[id].crystalActivated,
+    }])) as CompletionSnapshot['teamStates'],
+  }
+}
 
 export function applyArenaOperation(current: Arena, operation: ArenaOperation, now: number): OperationResult | null {
   const settled = settleArenaPhase(current, now)
   const arena: Arena = { ...settled, teams: { ...settled.teams }, phaseTimer: { ...settled.phaseTimer } }
-  const result = (description: string, undo?: UndoAction): OperationResult => ({ arena, description, undo })
+  const result = (description: string, undo?: UndoAction, completionSnapshot?: CompletionSnapshot): OperationResult => ({ arena, description, undo, completionSnapshot })
 
   switch (operation.type) {
     case 'start-phase':
@@ -160,6 +179,7 @@ export function applyArenaOperation(current: Arena, operation: ArenaOperation, n
       if (team.phaseCompleted || team.crystalActivated) return null
       const finalPhase = arena.phaseIndex === MISSIONS.length - 1
       if ((operation.type === 'activate') !== finalPhase) return null
+      const completionSnapshot = snapshotCompletion(arena, team.id)
 
       arena.teams[team.id] = {
         ...team,
@@ -183,7 +203,7 @@ export function applyArenaOperation(current: Arena, operation: ArenaOperation, n
         arena.phaseTimer = { ...arena.phaseTimer, isRunning: false, updatedAt: undefined }
       }
       const action = operation.type === 'activate' ? 'ativou o cristal' : `concluiu ${MISSIONS[arena.phaseIndex]}`
-      return result(`${team.name} ${action}${allCompleted ? ' · fase encerrada' : triggersFinalWindow ? ' · janela final 02:00' : ''}`)
+      return result(`${team.name} ${action}${allCompleted ? ' · fase encerrada' : triggersFinalWindow ? ' · janela final 02:00' : ''}`, undefined, completionSnapshot)
     }
     case 'reset':
       return { arena: createInitialArena(), description: 'Arena resetada · fase, tempo, pontuações e ativações restaurados' }
@@ -192,6 +212,26 @@ export function applyArenaOperation(current: Arena, operation: ArenaOperation, n
       const team = arena.teams[undo.teamId]
       arena.teams[team.id] = { ...team, score: undo.score }
       return result(`Desfeito: ${undo.label}`)
+    }
+    case 'undo-completion': {
+      const snapshot = operation.snapshot
+      if (snapshot.phaseIndex !== arena.phaseIndex) return null
+      const completedTeam = arena.teams[snapshot.teamId]
+      if (!completedTeam.phaseCompleted && !completedTeam.crystalActivated) return null
+
+      arena.phaseStatus = snapshot.phaseStatus
+      arena.phaseTimer = {
+        ...snapshot.phaseTimer,
+        updatedAt: snapshot.phaseTimer.isRunning ? now : undefined,
+      }
+      arena.firstCompletionTriggered = snapshot.firstCompletionTriggered
+      for (const id of TEAM_IDS) {
+        arena.teams[id] = {
+          ...arena.teams[id],
+          ...snapshot.teamStates[id],
+        }
+      }
+      return result(`Conclusão do ${completedTeam.name} desfeita`)
     }
   }
 }

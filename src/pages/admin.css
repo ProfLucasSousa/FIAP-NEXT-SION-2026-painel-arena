@@ -40,6 +40,7 @@
 .admin-shell .action-row { margin-top: 12px; }
 .admin-shell .action-row button { width: 100%; min-height: 50px; }
 .admin-shell .action-row .accent { background: color-mix(in srgb, var(--team), #071018 91%); }
+.admin-shell .action-row .undo-completion { border-color: #72c7d8; color: #b9f4ff; background: #0a222c; }
 .admin-shell .admin-adjustments { border-top: 1px solid #243f4b; margin-top: 22px; padding-top: 12px; }
 .admin-adjustments summary { cursor: pointer; color: #9fbdc8; font-size: .78rem; padding: 6px 0; }
 .admin-adjustments p { color: #86a6b4; font-size: .75rem; line-height: 1.5; }

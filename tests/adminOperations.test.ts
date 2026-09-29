@@ -66,6 +66,109 @@ test('second completion preserves the clock and third completion ends the phase'
   assert.equal(store.getState().phaseStatus, 'finished')
 })
 
+test('undoing the first completion restores 05:30 and removes the final window', () => {
+  const { store, advance } = setup()
+  store.getState().startPhase()
+  advance(150_000)
+  store.getState().tick()
+  assert.equal(store.getState().phaseTimer.remainingMs, 330_000)
+
+  assert.equal(store.getState().completeMission('red'), true)
+  assert.equal(store.getState().phaseTimer.remainingMs, 120_000)
+  assert.equal(store.getState().undoLastCompletion(), true)
+  assert.equal(store.getState().phaseTimer.remainingMs, 330_000)
+  assert.equal(store.getState().phaseTimer.isRunning, true)
+  assert.equal(store.getState().phaseStatus, 'running')
+  assert.equal(store.getState().firstCompletionTriggered, false)
+  assert.equal(store.getState().teams.red.phaseCompleted, false)
+})
+
+test('undoing the first completion restores 00:24 even though completion raised it to 02:00', () => {
+  const { store, advance } = setup()
+  store.getState().startPhase()
+  advance(456_000)
+  store.getState().tick()
+  assert.equal(store.getState().phaseTimer.remainingMs, 24_000)
+
+  store.getState().completeMission('red')
+  assert.equal(store.getState().phaseTimer.remainingMs, 120_000)
+  store.getState().undoLastCompletion()
+  assert.equal(store.getState().phaseTimer.remainingMs, 24_000)
+  assert.equal(store.getState().firstCompletionTriggered, false)
+})
+
+test('completion undo is LIFO and preserves the first completion final window', () => {
+  const { store, advance } = setup()
+  store.getState().startPhase()
+  store.getState().completeMission('red')
+  advance(45_000)
+  store.getState().completeMission('blue')
+  assert.equal(store.getState().phaseTimer.remainingMs, 75_000)
+  assert.deepEqual(store.getState().completionHistory.map(entry => entry.teamId), ['red', 'blue'])
+
+  store.getState().undoLastCompletion()
+  assert.equal(store.getState().phaseTimer.remainingMs, 75_000)
+  assert.equal(store.getState().teams.red.phaseCompleted, true)
+  assert.equal(store.getState().teams.blue.phaseCompleted, false)
+  assert.equal(store.getState().firstCompletionTriggered, true)
+  assert.equal(store.getState().completionHistory.at(-1)?.teamId, 'red')
+
+  store.getState().undoLastCompletion()
+  assert.equal(store.getState().teams.red.phaseCompleted, false)
+  assert.equal(store.getState().firstCompletionTriggered, false)
+  assert.equal(store.getState().phaseTimer.remainingMs, 480_000)
+  assert.equal(store.getState().completionHistory.length, 0)
+})
+
+test('undoing the third completion reopens the phase with its prior running or paused timer', () => {
+  for (const paused of [false, true]) {
+    const { store, advance } = setup()
+    store.getState().startPhase()
+    store.getState().completeMission('red')
+    store.getState().completeMission('blue')
+    advance(94_000)
+    if (paused) store.getState().pausePhase()
+
+    store.getState().completeMission('green')
+    assert.equal(store.getState().phaseStatus, 'finished')
+    assert.equal(store.getState().undoLastCompletion(), true)
+    assert.equal(store.getState().teams.green.phaseCompleted, false)
+    assert.equal(store.getState().phaseStatus, paused ? 'paused' : 'running')
+    assert.equal(store.getState().phaseTimer.isRunning, !paused)
+    assert.equal(store.getState().phaseTimer.remainingMs, 26_000)
+  }
+})
+
+test('completion undo never restores score from its snapshot', () => {
+  const { store } = setup()
+  store.getState().startPhase()
+  store.getState().completeMission('red')
+  store.getState().adjustScore('red', 300)
+  store.getState().undoLastCompletion()
+  assert.equal(store.getState().teams.red.score, 300)
+  assert.equal(store.getState().teams.red.phaseCompleted, false)
+  assert.match(store.getState().history[0].description, /Conclusão do Titã Vermelho desfeita/)
+  assert.match(store.getState().history[2].description, /concluiu Encontrar/)
+})
+
+test('completion history survives refresh and is cleared for a new phase or arena reset', () => {
+  const { store, create } = setup()
+  finishPhase(store)
+  const refreshed = create()
+  assert.deepEqual(refreshed.getState().completionHistory.map(entry => entry.teamId), ['red', 'blue', 'green'])
+  assert.equal(refreshed.getState().undoLastCompletion(), true)
+  assert.equal(refreshed.getState().teams.green.phaseCompleted, false)
+  refreshed.getState().completeMission('green')
+  assert.equal(refreshed.getState().prepareNextPhase(), true)
+  assert.equal(refreshed.getState().completionHistory.length, 0)
+
+  refreshed.getState().startPhase()
+  refreshed.getState().completeMission('red')
+  assert.equal(refreshed.getState().completionHistory.length, 1)
+  refreshed.getState().reset()
+  assert.equal(refreshed.getState().completionHistory.length, 0)
+})
+
 test('duplicate completion is rejected without changing revision, history or timer', () => {
   const { store, advance } = setup()
   store.getState().startPhase()

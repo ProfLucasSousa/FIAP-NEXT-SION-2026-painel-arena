@@ -11,12 +11,17 @@ const POSITIVE_SCORES = [100, 200, 300]
 const NEGATIVE_SCORES = [-25, -100, -200, -300]
 
 export function TeamAdminCard({ team }: { team: Team }) {
-  const { setScore, adjustScore, completeMission, activateCrystal, phaseIndex, phaseStatus } = useArenaStore()
+  const {
+    setScore, adjustScore, completeMission, activateCrystal, undoLastCompletion,
+    completionHistory, phaseIndex, phaseStatus,
+  } = useArenaStore()
   const [confirmActivation, setConfirmActivation] = useState(false)
+  const [confirmUndoCompletion, setConfirmUndoCompletion] = useState(false)
   const status = getTeamStatus(team, phaseStatus)
   const finalPhase = phaseIndex === 3
   const finished = team.phaseCompleted || team.crystalActivated
   const canComplete = (phaseStatus === 'running' || phaseStatus === 'paused') && !finished
+  const canUndoCompletion = finished && completionHistory.at(-1)?.teamId === team.id
 
   const handleActivation = () => {
     if (activateCrystal(team.id)) sendCrystalActivation(team.id)
@@ -49,7 +54,9 @@ export function TeamAdminCard({ team }: { team: Team }) {
 
     <div className="action-row">{finalPhase
       ? <button className="activate" disabled={!canComplete} onClick={() => setConfirmActivation(true)}>{team.crystalActivated ? 'Cristal ativado' : 'Ativar cristal'}</button>
-      : <button className="accent" disabled={!canComplete} onClick={() => completeMission(team.id)}>{team.phaseCompleted ? 'Missão concluída' : 'Concluir missão'}</button>}</div>
+      : <button className="accent" disabled={!canComplete} onClick={() => completeMission(team.id)}>{team.phaseCompleted ? '✓ Concluído' : 'Concluir missão'}</button>}
+      {canUndoCompletion && <button className="undo-completion" onClick={() => setConfirmUndoCompletion(true)}>↶ Desfazer conclusão</button>}
+    </div>
 
     <details className="admin-adjustments"><summary>Definir pontuação total</summary>
       <p>Substitui a pontuação atual pelo valor informado.</p>
@@ -57,6 +64,7 @@ export function TeamAdminCard({ team }: { team: Team }) {
     </details>
 
     {confirmActivation && <AdminConfirmation title={`Ativar cristal do ${team.name}?`} confirmLabel="Ativar cristal" onCancel={() => setConfirmActivation(false)} onConfirm={handleActivation}><p>Esta ação concluirá a equipe na fase Ativar e iniciará a animação de convergência no telão.</p></AdminConfirmation>}
+    {confirmUndoCompletion && <AdminConfirmation title={`Desfazer conclusão do ${team.name}?`} confirmLabel="Desfazer" onCancel={() => setConfirmUndoCompletion(false)} onConfirm={() => { undoLastCompletion(); setConfirmUndoCompletion(false) }}><p>Isso restaurará o estado da fase para imediatamente antes da conclusão. A pontuação não será alterada.</p></AdminConfirmation>}
   </section>
 }
 

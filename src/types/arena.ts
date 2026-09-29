@@ -35,6 +35,15 @@ export interface Arena {
 
 export type ArenaSnapshot = Arena
 
+export interface CompletionSnapshot {
+  phaseIndex: number
+  teamId: TeamId
+  phaseTimer: Pick<PhaseTimer, 'remainingMs' | 'isRunning'>
+  phaseStatus: PhaseStatus
+  firstCompletionTriggered: boolean
+  teamStates: Record<TeamId, Pick<Team, 'phaseCompleted' | 'crystalActivated'>>
+}
+
 export interface CrystalActivationEvent {
   activationId: string
   teamId: TeamId

@@ -37,6 +37,9 @@ test('Admin exposes the shared phase clock, exact scores and separate manual tot
     const cardSource = readFileSync(new URL('../src/components/TeamAdminCard.tsx', import.meta.url), 'utf8')
     assert.match(cardSource, /phaseIndex === 3/)
     assert.match(cardSource, /Ativar cristal/)
+    assert.match(cardSource, /completionHistory\.at\(-1\)\?\.teamId === team\.id/)
+    assert.match(cardSource, /↶ Desfazer conclusão/)
+    assert.match(cardSource, /Desfazer conclusão do \$\{team\.name\}/)
 
     const dialog = renderToStaticMarkup(createElement(AdminConfirmation, {
       title: 'Resetar arena?', confirmLabel: 'Resetar arena', onConfirm: () => {}, onCancel: () => {}, children: 'Esta ação não pode ser desfeita.',

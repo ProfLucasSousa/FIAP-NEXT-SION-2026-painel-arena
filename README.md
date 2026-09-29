@@ -40,6 +40,7 @@ As três equipes disputam a mesma fase simultaneamente. Existe somente um cronô
 - A primeira equipe que conclui define o tempo restante em exatamente `02:00`, mesmo quando isso aumenta o relógio.
 - A segunda conclusão não altera o tempo.
 - A terceira conclusão encerra a fase imediatamente.
+- A conclusão mais recente da fase pode ser desfeita; conclusões anteriores ficam disponíveis em ordem inversa (LIFO).
 - Ao chegar a `00:00`, a fase termina e equipes pendentes recebem o status `TEMPO ENCERRADO`.
 - O avanço para a próxima fase é sempre manual.
 - Não existem timer geral, timers individuais ou avanço automático.
@@ -55,7 +56,7 @@ As três equipes disputam a mesma fase simultaneamente. Existe somente um cronô
 - Energias vermelha, azul e verde preservadas separadamente dentro do núcleo.
 - Sincronização em tempo real por Socket.IO e `BroadcastChannel`.
 - Persistência do estado operacional no `localStorage` do Admin.
-- Histórico recente e opção de desfazer a alteração de pontuação mais recente.
+- Histórico recente, desfazer da alteração de pontuação mais recente e desfazer seguro de conclusões.
 
 ## Tecnologias
 
@@ -107,9 +108,10 @@ Se aparecer `EADDRINUSE`, já existe outro processo utilizando a porta indicada.
 3. Confirme que a Fase 01 — Encontrar está preparada com `08:00`.
 4. Clique em **Iniciar fase**.
 5. Use **Concluir missão** para registrar cada equipe. A primeira conclusão abre a janela final de `02:00`.
-6. Quando as três equipes concluírem ou o tempo zerar, prepare manualmente a próxima fase.
-7. Clique novamente em **Iniciar fase**; a preparação nunca inicia o cronômetro automaticamente.
-8. Na fase Ativar, confirme cada ativação para iniciar a convergência do respectivo cristal ao núcleo.
+6. Se uma conclusão tiver sido registrada por engano, use **Desfazer conclusão** no card da última equipe concluída e confirme a operação.
+7. Quando as três equipes concluírem ou o tempo zerar, prepare manualmente a próxima fase.
+8. Clique novamente em **Iniciar fase**; a preparação nunca inicia o cronômetro automaticamente.
+9. Na fase Ativar, confirme cada ativação para iniciar a convergência do respectivo cristal ao núcleo.
 
 O Admin é a fonte das alterações manuais. Pontuação, fase, tempo, conclusões e ativações são transmitidos imediatamente aos displays conectados.
 
@@ -122,6 +124,21 @@ O Admin oferece quatro grupos de controles:
 - **Adicionar pontos**, que soma o valor digitado à pontuação atual;
 - **Definir total**, que substitui a pontuação pelo valor digitado.
 
+### Desfazer conclusão
+
+Antes de cada conclusão, o Admin armazena um snapshot mínimo do estado da fase. O botão **↶ Desfazer conclusão** aparece somente no card da conclusão mais recente e restaura:
+
+- status de conclusão e ativação das equipes;
+- tempo restante e estado do cronômetro;
+- fase em andamento, pausada ou encerrada;
+- disparo da janela final de `02:00`.
+
+As conclusões são desfeitas em ordem LIFO. Se Vermelho concluiu e depois Azul concluiu, é necessário desfazer Azul antes de Vermelho.
+
+A pontuação não faz parte do snapshot. Assim, pontos adicionados ou removidos depois de uma conclusão permanecem inalterados quando ela é desfeita. A correção também gera uma nova entrada no histórico operacional, sem apagar o registro da conclusão original.
+
+Na Fase 04, desfazer uma ativação restaura diretamente o cristal à posição de origem e remove sua energia do Núcleo Planetário. Nenhuma animação cinematográfica é executada ao contrário.
+
 ## Persistência e sincronização
 
 O computador com o Admin persiste no `localStorage`:
@@ -131,9 +148,12 @@ O computador com o Admin persiste no `localStorage`:
 - disparo da janela final;
 - conclusões e ativações das equipes;
 - pontuações;
+- pilha de snapshots necessária para desfazer conclusões da fase atual;
 - histórico operacional.
 
-Ao atualizar o Display, ele solicita o estado vigente ao Admin/servidor. Ativações antigas são restauradas sem repetir a animação cinematográfica.
+A pilha de conclusões sobrevive a uma atualização do Admin e é limpa ao preparar uma nova fase ou resetar a arena.
+
+Ao atualizar o Display, ele solicita o estado vigente ao Admin/servidor. Uma conclusão desfeita é sincronizada pelo estado consolidado, sem disparar novamente eventos de conclusão ou a janela final. Ativações antigas são restauradas sem repetir a animação cinematográfica.
 
 Em duas abas do mesmo navegador, `BroadcastChannel` funciona como contingência local. Entre computadores, a sincronização ocorre pelo Socket.IO.
 
