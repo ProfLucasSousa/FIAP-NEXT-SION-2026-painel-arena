@@ -31,10 +31,10 @@ As três equipes disputam a mesma fase simultaneamente. Existe somente um cronô
 
 | Fase | Missão | Duração |
 | ---: | --- | ---: |
-| 01 | Encontrar | `08:00` |
-| 02 | Proteger | `06:30` |
-| 03 | Levar | `06:30` |
-| 04 | Ativar | `04:30` |
+| 01 | Encontrar | `06:00` |
+| 02 | Proteger | `06:00` |
+| 03 | Levar | `06:00` |
+| 04 | Ativar | `04:00` |
 
 - Cada fase é preparada parada e precisa ser iniciada manualmente.
 - A primeira equipe que conclui define o tempo restante em exatamente `02:00`, mesmo quando isso aumenta o relógio.
@@ -105,7 +105,7 @@ Se aparecer `EADDRINUSE`, já existe outro processo utilizando a porta indicada.
 
 1. Abra o `/admin` no computador controlador.
 2. Abra o `/display` no telão ou em outra máquina da mesma rede.
-3. Confirme que a Fase 01 — Encontrar está preparada com `08:00`.
+3. Confirme que a Fase 01 — Encontrar está preparada com `06:00`.
 4. Clique em **Iniciar fase**.
 5. Use **Concluir missão** para registrar cada equipe. A primeira conclusão abre a janela final de `02:00`.
 6. Se uma conclusão tiver sido registrada por engano, use **Desfazer conclusão** no card da última equipe concluída e confirme a operação.

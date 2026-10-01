@@ -29,6 +29,7 @@ function finishPhase(store: ReturnType<typeof createArenaStore>) {
 
 test('each phase starts manually with its configured shared duration', () => {
   const { store } = setup()
+  assert.deepEqual(PHASE_DURATION_SECONDS, [360, 360, 360, 240])
   for (const [phaseIndex, duration] of PHASE_DURATION_SECONDS.entries()) {
     assert.equal(store.getState().phaseIndex, phaseIndex)
     assert.equal(store.getState().phaseStatus, 'ready')
@@ -39,7 +40,7 @@ test('each phase starts manually with its configured shared duration', () => {
 })
 
 test('the first completion changes any remaining value to exactly 02:00', () => {
-  for (const [elapsed, expectedBefore] of [[139_000, 341_000], [461_000, 19_000]] as const) {
+  for (const [elapsed, expectedBefore] of [[19_000, 341_000], [341_000, 19_000]] as const) {
     const { store, advance } = setup()
     store.getState().startPhase()
     advance(elapsed)
@@ -69,7 +70,7 @@ test('second completion preserves the clock and third completion ends the phase'
 test('undoing the first completion restores 05:30 and removes the final window', () => {
   const { store, advance } = setup()
   store.getState().startPhase()
-  advance(150_000)
+  advance(30_000)
   store.getState().tick()
   assert.equal(store.getState().phaseTimer.remainingMs, 330_000)
 
@@ -86,7 +87,7 @@ test('undoing the first completion restores 05:30 and removes the final window',
 test('undoing the first completion restores 00:24 even though completion raised it to 02:00', () => {
   const { store, advance } = setup()
   store.getState().startPhase()
-  advance(456_000)
+  advance(336_000)
   store.getState().tick()
   assert.equal(store.getState().phaseTimer.remainingMs, 24_000)
 
@@ -116,7 +117,7 @@ test('completion undo is LIFO and preserves the first completion final window', 
   store.getState().undoLastCompletion()
   assert.equal(store.getState().teams.red.phaseCompleted, false)
   assert.equal(store.getState().firstCompletionTriggered, false)
-  assert.equal(store.getState().phaseTimer.remainingMs, 480_000)
+  assert.equal(store.getState().phaseTimer.remainingMs, 360_000)
   assert.equal(store.getState().completionHistory.length, 0)
 })
 
@@ -186,7 +187,7 @@ test('00:00 only ends the phase and marks unfinished teams as timed out', () => 
   const { store, advance } = setup()
   store.getState().adjustScore('red', 300)
   store.getState().startPhase()
-  advance(480_000)
+  advance(360_000)
   store.getState().tick()
   assert.equal(store.getState().phaseStatus, 'finished')
   assert.equal(store.getState().phaseTimer.remainingMs, 0)
@@ -217,7 +218,7 @@ test('running countdown catches up after refresh and persists only the new model
   store.getState().startPhase()
   advance(12_500)
   const refreshed = create()
-  assert.equal(refreshed.getState().phaseTimer.remainingMs, 467_500)
+  assert.equal(refreshed.getState().phaseTimer.remainingMs, 347_500)
   assert.equal(refreshed.getState().phaseStatus, 'running')
   const snapshot = toArenaSnapshot(refreshed.getState())
   assert.doesNotThrow(() => structuredClone(snapshot))
@@ -237,7 +238,7 @@ test('old timers are discarded while scores survive migration', () => {
   const migrated = create()
   assert.equal(migrated.getState().teams.red.score, 3450)
   assert.equal(migrated.getState().phaseIndex, 0)
-  assert.equal(migrated.getState().phaseTimer.remainingMs, 480_000)
+  assert.equal(migrated.getState().phaseTimer.remainingMs, 360_000)
   assert.equal(migrated.getState().phaseStatus, 'ready')
 })
 
@@ -248,7 +249,7 @@ test('history is bounded and reset restores phase 1, scores and activations', ()
   store.getState().reset()
   assert.equal(store.getState().phaseIndex, 0)
   assert.equal(store.getState().phaseStatus, 'ready')
-  assert.equal(store.getState().phaseTimer.remainingMs, 480_000)
+  assert.equal(store.getState().phaseTimer.remainingMs, 360_000)
   for (const id of TEAM_IDS) {
     assert.equal(store.getState().teams[id].score, 0)
     assert.equal(store.getState().teams[id].phaseCompleted, false)

@@ -70,7 +70,7 @@ test('actual Socket.IO relay synchronizes operations and reconnected display wit
     await perform(() => adminStore.getState().undoLastCompletion())
     assert.equal(displayStore.getState().teams.red.phaseCompleted, false)
     assert.equal(displayStore.getState().firstCompletionTriggered, false)
-    assert.ok(displayStore.getState().phaseTimer.remainingMs > 479_800)
+    assert.ok(displayStore.getState().phaseTimer.remainingMs > 359_800)
     await perform(() => adminStore.getState().completeMission('red'))
     await perform(() => adminStore.getState().pausePhase())
     assert.equal(displayStore.getState().phaseStatus, 'paused')

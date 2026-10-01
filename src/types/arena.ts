@@ -4,7 +4,7 @@ export type TeamId = (typeof TEAM_IDS)[number]
 export const MISSIONS = ['Encontrar', 'Proteger', 'Levar', 'Ativar'] as const
 export type Mission = (typeof MISSIONS)[number]
 
-export const PHASE_DURATION_SECONDS = [8 * 60, 6 * 60 + 30, 6 * 60 + 30, 4 * 60 + 30] as const
+export const PHASE_DURATION_SECONDS = [6 * 60, 6 * 60, 6 * 60, 4 * 60] as const
 export const FINAL_WINDOW_SECONDS = 2 * 60
 
 export interface PhaseTimer {

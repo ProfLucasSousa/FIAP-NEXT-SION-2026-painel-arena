@@ -86,7 +86,7 @@ export function AdminPage() {
 
     {confirmReset && <AdminConfirmation title="Resetar arena?" confirmLabel="Resetar arena" onCancel={() => setConfirmReset(false)} onConfirm={() => { reset(); setConfirmReset(false) }}>
       <p>Esta ação irá restaurar:</p>
-      <ul><li>Fase 01 — Encontrar, com 08:00</li><li>Pontuações e status das equipes</li><li>Ativações e estado dos cristais</li></ul>
+      <ul><li>Fase 01 — Encontrar, com 06:00</li><li>Pontuações e status das equipes</li><li>Ativações e estado dos cristais</li></ul>
       <p>Esta ação não pode ser desfeita. O histórico recente será mantido para consulta.</p>
     </AdminConfirmation>}
   </main>

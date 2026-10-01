@@ -22,7 +22,7 @@ test('Admin exposes the shared phase clock, exact scores and separate manual tot
 
     const admin = renderToStaticMarkup(createElement(AdminPage))
     assert.match(admin, /Iniciar fase/)
-    assert.match(admin, /08:00/)
+    assert.match(admin, /06:00/)
     assert.match(admin, /Encontrar/)
     assert.match(admin, /Resetar arena/)
     assert.doesNotMatch(admin, /Ajustar tempo/)

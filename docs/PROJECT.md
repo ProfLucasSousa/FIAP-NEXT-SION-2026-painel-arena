@@ -61,31 +61,27 @@ O sistema NÃO deve iniciar automaticamente a próxima fase.
 
 # Tempo das fases
 
-Existe apenas **um cronômetro compartilhado por fase**.
-
-Não existem:
-
-* timer geral da arena;
-* timers individuais por equipe;
-* timers individuais por missão.
+Existe apenas um cronômetro compartilhado por fase.
 
 As durações fixas são:
 
-```text
 FASE 1 — ENCONTRAR
-08:00
+06:00
 
 FASE 2 — PROTEGER
-06:30
+06:00
 
 FASE 3 — LEVAR
-06:30
+06:00
 
 FASE 4 — ATIVAR
-04:30
-```
+04:00
 
 Todos os cronômetros são regressivos.
+
+A primeira equipe que concluir a fase dispara a janela final de 02:00 para as equipes restantes.
+
+Essa janela de 02:00 é disparada uma única vez por fase, independentemente do tempo restante no momento da primeira conclusão.
 
 ---
 
@@ -110,7 +106,7 @@ Exemplo:
 ```text
 FASE 2 — PROTEGER
 
-06:30
+06:00
 
 [ INICIAR FASE ]
 ```
@@ -811,7 +807,7 @@ FASE ATUAL
 
 TEMPO
 
-06:30
+06:00
 ```
 
 Ações:
@@ -936,7 +932,7 @@ Deve solicitar confirmação.
 Deve restaurar:
 
 * fase 1;
-* timer `08:00`;
+* timer `06:00`;
 * firstCompletionTriggered = false;
 * pontuações;
 * status;
